@@ -38,6 +38,11 @@ import time
 from machine import UART, Pin, I2C
 import logging
 
+checkMem = False   #HK: zur Überwachung der Speichernutzung
+if checkMem:
+    import micropython
+    import gc #https://forum.micropython.org/viewtopic.php?t=1747  https://docs.micropython.org/en/latest/develop/memorymgt.html
+
 
 debug_lin = False
 debug_gsm = False
@@ -272,6 +277,16 @@ async def main(client):
     i = 0
     while True:
         await asyncio.sleep(10)  # Update every 10sec
+        if checkMem:
+            # Speicher überwachen
+            mem=gc.mem_free()
+            print(f"mem_free:{mem}")
+            micropython.mem_info()
+            if mem < 20000:
+                gc.collect()    #Speicher aufräumen
+                mem=gc.mem_free()
+                print(f"mem_free:{mem}")
+
         s = lin.app.get_all(True)
         for key in s.keys():
             print(f'publish {key}:{s[key]}')
@@ -279,6 +294,7 @@ async def main(client):
                 await client.publish(Pub_Prefix+key, str(s[key]), qos=1)
             except:
                 print("Error in LIN status publishing")
+
         if not (dc == None):
             s = dc.get_all(True)
             for key in s.keys():
@@ -287,6 +303,7 @@ async def main(client):
                     await client.publish(Pub_Prefix+key, str(s[key]), qos=1)
                 except:
                     print("Error in duo_ctrl status publishing")
+
         if not (sl == None):
             s = sl.get_all()
             for key in s.keys():
