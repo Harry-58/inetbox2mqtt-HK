@@ -23,7 +23,8 @@
 
                     Eine SMS wird nur von den in "erlaubteAbsender" eingetragenen Nummern angenommen.
 
-        Es erfolgt keine automatische Rückmeldung über SMS. Man sieht nur anhand der MQTT-Meldungen bzw. Print-Ausgaben ob erfolgreich.
+        Es erfolgt keine automatische Rückmeldung über SMS.   
+        Man sieht nur anhand der MQTT-Meldungen bzw. Print-Ausgaben ob erfolgreich.  
         Der Status der InetBox kann mit der Status-SMS angefordert werden.
 
 
