@@ -10,6 +10,10 @@
 
 # The imports below are a little tricky in order to support operation under Micropython as well as
 # Linux CPython. The latter is used for tests.
+#
+# meine Änderungen: (todo:HK)
+#  getRSSI() hinzugefügt Zeile 525
+#  fehler in log.debug   Zeile 761/769
 
 VERSION = (0, 7, 4) # modified in Line 678 / 690 by mc
 
@@ -38,7 +42,12 @@ except:
 
 try:
     import logging
+
+    logLevel = logging.INFO
+
     log = logging.getLogger(__name__)
+    log.setLevel(logLevel)
+
 except:
     class Logger: # please upip.install('logging')
         def debug(self, msg, *args): pass
@@ -513,6 +522,12 @@ class MQTTClient():
             self._addr = new_addr[0][-1]
         log.debug("DNS %s->%s", self._c.server, self._addr)
 
+    def getRSSI(self): #todo:HK ergänzt
+        rssi = -111
+        s = self._c.interface
+        rssi = s.status("rssi")
+        return rssi
+
     async def connect(self):
         if self._state > 1:
             raise ValueError("cannot reuse")
@@ -744,7 +759,7 @@ class MQTTClient():
             if self._prev_pub is not None and pid in self._unacked_pids and \
                     self._prev_pub_proto != proto:
                 m = self._prev_pub
-                log.warning("repub->%s qos=%d pid=%d", m.topic, m.qos, m.pid)
+                log.warning("repub->%s qos=%d pid=%s", m.topic, m.qos, m.pid)  # todo:HK war falsch pid=%d
                 self._prev_pub_proto = proto
                 try:
                     await proto.publish(m, dup=1)
@@ -752,7 +767,7 @@ class MQTTClient():
                     await self._reconnect(proto, 'pub')
                     continue
             # now publish the new packet on the same connection
-            log.debug("pub->%s qos=%d pid=%d", message.topic, message.qos, message.pid)
+            log.debug("pub->%s qos=%d pid=%s", message.topic, message.qos, message.pid)   #todo:HK war falsch pid=%d
             try:
                 await proto.publish(message, dup)
             except OSError as e:
