@@ -288,11 +288,11 @@ class InetboxApp:
         #print (f"pid_21 geändert alt:{format_bytes(self.lastPID_21)}")
         #print (f"                neu:{databytes.hex(' ')}")
         data = {
-            "target_temp_room":  cnv.temp_code_to_decimal(databytes[0] | (databytes[1] & 0x0F) << 8),
-            "target_temp_water":  cnv.temp_code_to_decimal(databytes[2] << 4 | (databytes[1] & 0xF0) >> 4),
+            "current_temp_room":  cnv.temp_code_to_decimal(databytes[0] | (databytes[1] & 0x0F) << 8),
+            "current_temp_water":  cnv.temp_code_to_decimal(databytes[2] << 4 | (databytes[1] & 0xF0) >> 4),
             # "pid_21_unknown_byte_3": hex(databytes[3]),
             # "pid_21_unknown_byte_4": hex(databytes[4]),
-            "vent_or_something_status": self.map_or_debug(self.VENT_OR_OPERATING_STATUS,databytes[5]),
+            "vent_or_something_status": self.map_or_debug(self.VENT_OR_OPERATING_STATUS, databytes[5]),
             # "pid_21_unknown_byte_6": hex(databytes[6]),
             # "pid_21_unknown_byte_7": hex(databytes[7]),
             "PID_21": format_bytes(databytes)  # für diagnosezwecke
@@ -470,6 +470,7 @@ class InetboxApp:
 
 # Status-Dump - with False, it sends all status-values
 # with True it sends only a list of changed values - but reset the chance-flag
+
 
     def get_all(self, only_updates):
         #        print("Status:", self.status)
