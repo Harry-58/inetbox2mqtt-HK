@@ -277,15 +277,12 @@ async def main(client):
     i = 0
     while True:
         await asyncio.sleep(10)  # Update every 10sec
-        if checkMem:
-            # Speicher überwachen
-            mem=gc.mem_free()
-            print(f"mem_free:{mem}")
+        if checkMem:   # Speicher überwachen   https://docs.micropython.org/en/latest/reference/constrained.html#the-heap
             micropython.mem_info()
+            mem=gc.mem_free()
             if mem < 20000:
                 gc.collect()    #Speicher aufräumen
-                mem=gc.mem_free()
-                print(f"mem_free:{mem}")
+                print(f"mem_free:{mem} --> {gc.mem_free()}")
 
         s = lin.app.get_all(True)
         for key in s.keys():
