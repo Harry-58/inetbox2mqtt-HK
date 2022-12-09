@@ -26,7 +26,7 @@
 #                  Del.r     alle gelesenen SMS löschen
 #                  Del.a     alle SMS löschen
 #                  Status    Status InetBox abfragen.
-#                               Antwort-SMS: ttr:x;ctr;x;ttw:x;ctw:x;hm:x;os:x;U:x;err:x:lin:x;mqtt:x
+#                               Antwort-SMS: ttr:x; ctr:x  ttw:x; ctw:x  hm:x; os:x  U:x; err:x  rW:xx; rG:xx  lin:x; mqtt:x
 #                                   ttr=target_temp_room   ctr=current_temp_room
 #                                   ttw=target_temp_water  ctw=current_temp_water
 #                                   hm=heating_mode        os= operating_status
@@ -334,7 +334,7 @@ class gsm:
     async def doSMS(self, line):
         log.debug(f"SMS empfangen:{line}")
         try:
-            if line.startswith('+CMT:'):  # +CMT: "+491752488874","","22/12/07,13:05:16+04"
+            if line.startswith('+CMT:'):  # +CMT: "+491751234567","","22/12/07,13:05:16+04"
                 params = line.split('"', 6)
                 print (f"CMT-params: { params}  {len(params)}")
                 if len(params) > 5:
