@@ -3,8 +3,11 @@
 # version 0.8.2
 # slighty changes, hidden status display, typros
 #
+#   Änderungen HK:
+#   pid_??_unknown_byte_??   entfernt
+#   PID_20/21/22 mit allen Datenbytes in parse_status_... ergänzt
 
-from tools import calculate_checksum
+from tools import calculate_checksum, format_bytes
 import conversions as cnv
 
 
@@ -79,89 +82,89 @@ class InetboxApp:
     STATUS_BUFFER_HEADER_TIMER = bytes([0x18, 0x3D])
     STATUS_BUFFER_HEADER_02 = bytes([0x02, 0x0D])
     STATUS_BUFFER_HEADER_03 = bytes([0x0A, 0x15])
-    
+
     STATUS_BUFFER_HEADER_WRITE_STATUS = bytes([0x0C, 0x32])
 
 
 # Problem is, that micropython doesn't hold the correct order of the keys (like CPython > 3.7)
-# Workaround is 
+# Workaround is
 
     STATUS_BUFFER_TYPES = {
         STATUS_BUFFER_HEADER_RECV_STATUS: {
             # mapping-table: key, subject, byte-len, storage
-                    1: ["dummy", 1, False],
-                    2: ["checksum", 1, False],
-                    3: ["target_temp_room", 2, True],
-                    4: ["heating_mode", 1, True],
-                    5: ["recv_status_u3", 1, False],
-                    6: ["el_power_level", 2, True],
-                    7: ["target_temp_water", 2, True],
-                    8: ["el_power_level", 2, False],  # appears twice, we assume that it is the same
-                    9: ["energy_mix", 1,True],
-                   10: ["energy_mix", 1, False], # appears twice, we assume that it is the same
-                   11: ["current_temp_water", 2, True],
-                   12: ["current_temp_room", 2, True],
-                   13: ["operating_status", 1, True],
-                   14: ["error_code", 2, True],
-                   15: ["recv_status_u10", 1, False],
-                   16: ["recv_status_u11", 1, False],
-                   17: ["recv_status_u12", 1, False],
-                   18: ["recv_status_u13", 1, False],
-                   19: ["recv_status_u14", 1, False]
+            1: ["dummy", 1, False],
+            2: ["checksum", 1, False],
+            3: ["target_temp_room", 2, True],
+            4: ["heating_mode", 1, True],
+            5: ["recv_status_u3", 1, False],
+            6: ["el_power_level", 2, True],
+            7: ["target_temp_water", 2, True],
+            8: ["el_power_level", 2, False],  # appears twice, we assume that it is the same
+            9: ["energy_mix", 1, True],
+            10: ["energy_mix", 1, False],  # appears twice, we assume that it is the same
+            11: ["current_temp_water", 2, True],
+            12: ["current_temp_room", 2, True],
+            13: ["operating_status", 1, True],
+            14: ["error_code", 2, True],
+            15: ["recv_status_u10", 1, False],
+            16: ["recv_status_u11", 1, False],
+            17: ["recv_status_u12", 1, False],
+            18: ["recv_status_u13", 1, False],
+            19: ["recv_status_u14", 1, False]
         },
         STATUS_BUFFER_HEADER_WRITE_STATUS: {
             # mapping-table: key, mapping-key, byte-len
-                    1: ["command_counter", 1, "command_counter"], 
-                    2: ["checksum", 1, "checksum"],
-                    3: ["target_temp_room", 2, "target_temp_room"],
-                    4: ["heating_mode", 1, "heating_mode"],
-                    5: ["recv_status_u3", 1, ""],
-                    6: ["el_power_level", 2, "el_power_level"],
-                    7: ["target_temp_water", 2, "target_temp_water"],
-                    8: ["el_power_level", 2, "el_power_level"],
-                    9: ["energy_mix", 1, "energy_mix"],
-                   10: ["energy_mix", 1, "energy_mix"],
-                   11: ["dummy", 12, ""]
+            1: ["command_counter", 1, "command_counter"],
+            2: ["checksum", 1, "checksum"],
+            3: ["target_temp_room", 2, "target_temp_room"],
+            4: ["heating_mode", 1, "heating_mode"],
+            5: ["recv_status_u3", 1, ""],
+            6: ["el_power_level", 2, "el_power_level"],
+            7: ["target_temp_water", 2, "target_temp_water"],
+            8: ["el_power_level", 2, "el_power_level"],
+            9: ["energy_mix", 1, "energy_mix"],
+            10: ["energy_mix", 1, "energy_mix"],
+            11: ["dummy", 12, ""]
 
         },
         STATUS_BUFFER_HEADER_TIMER: {
             # mapping-table: key, subject, byte-len, storage
-                   1: ["dummy", 1, False],
-                   2: ["checksum", 1, False],
-                   3: ["timer_target_temp_room", 2, True],
-                   4: ["timer_unknown2", 1, False],
-                   5: ["timer_unknown3", 1, False],
-                   6: ["timer_unknown4", 1, False],
-                   7: ["timer_unknown5", 1, False],
-                   8: ["timer_target_temp_water", 2, True],
-                   9: ["timer_unknown6", 1, False],
-                  10: ["timer_unknown7", 1, False],
-                  11: ["timer_unknown8", 1, False],
-                  12: ["timer_unknown9", 1, False],
-                  13: ["timer_unknown10", 2, False],
-                  14: ["timer_unknown11", 2, False],
-                  15: ["timer_unknown12", 1, False],
-                  16: ["timer_unknown13", 1, False],
-                  17: ["timer_unknown14", 1, False],
-                  18: ["timer_unknown15", 1, False],
-                  19: ["timer_unknown16", 1, False],
-                  20: ["timer_unknown17", 1, False],
-                  21: ["timer_active", 1, True],
-                  22: ["timer_start_minutes", 1, True],
-                  23: ["timer_start_hours", 1, True],
-                  24: ["timer_stop_minutes", 1, True],
-                  25: ["timer_stop_hours", 1, True]
+            1: ["dummy", 1, False],
+            2: ["checksum", 1, False],
+            3: ["timer_target_temp_room", 2, True],
+            4: ["timer_unknown2", 1, False],
+            5: ["timer_unknown3", 1, False],
+            6: ["timer_unknown4", 1, False],
+            7: ["timer_unknown5", 1, False],
+            8: ["timer_target_temp_water", 2, True],
+            9: ["timer_unknown6", 1, False],
+            10: ["timer_unknown7", 1, False],
+            11: ["timer_unknown8", 1, False],
+            12: ["timer_unknown9", 1, False],
+            13: ["timer_unknown10", 2, False],
+            14: ["timer_unknown11", 2, False],
+            15: ["timer_unknown12", 1, False],
+            16: ["timer_unknown13", 1, False],
+            17: ["timer_unknown14", 1, False],
+            18: ["timer_unknown15", 1, False],
+            19: ["timer_unknown16", 1, False],
+            20: ["timer_unknown17", 1, False],
+            21: ["timer_active", 1, True],
+            22: ["timer_start_minutes", 1, True],
+            23: ["timer_start_hours", 1, True],
+            24: ["timer_stop_minutes", 1, True],
+            25: ["timer_stop_hours", 1, True]
         },
         STATUS_BUFFER_HEADER_02: {
             # mapping-table: key, subject, byte-len, storage
-                    1: ["command_counter", 1, True]
+            1: ["command_counter", 1, True]
         },
         STATUS_BUFFER_HEADER_03: {
             # mapping-table: key, subject, byte-len, storage
-                    1: ["dummy", 1, False],
-                    2: ["checksum", 1, False],
-                    3: ["clock", 2, True],
-                    4: ["display", 22, False]
+            1: ["dummy", 1, False],
+            2: ["checksum", 1, False],
+            3: ["clock", 2, True],
+            4: ["display", 22, False]
         },
     }
 
@@ -169,6 +172,8 @@ class InetboxApp:
         "command_counter": (int, int,),
         "checksum": (int, int,),
         "alive": (str, None,),
+        "rssi": (int, int,),
+        "spannung": (float, float,),
         "target_temp_room": (
             cnv.temp_code_to_string,
             cnv.string_to_temp_code,
@@ -213,17 +218,18 @@ class InetboxApp:
         "display": (str, None)
     }
 
-
     status = {'command_counter': [1, False], 'alive': ["OFF", True], 'target_temp_water': [0, True], 'checksum': [0, False],
               'target_temp_room': [0, True], 'heating_mode': [0, True], 'el_power_level': [0, True],
               'energy_mix': [1, True], 'current_temp_water': [0, True], 'current_temp_room': [0, True],
-              'operating_status': [0, True], 'error_code': [0, False] }
+              'operating_status': [0, True], 'error_code': [0, True],
+              'rssi': [0, True], 'spannung': [0, False]}
 
     status_updated = False
 
     upload_buffer = False
 
     display_status = {}
+    display_status_updated = False
 
     def __init__(self, debug=False):
         # when requested, set logger to debug level
@@ -239,94 +245,104 @@ class InetboxApp:
         try:
             # call the relevant function for the pid, if it exists ...
             {
-                0x20: self.parse_command_status,
-                0x21: self.parse_status_1,
-                0x22: self.parse_status_2,
+                0x20: self.parse_status_20,
+                0x21: self.parse_status_21,
+                0x22: self.parse_status_22,
             }[pid](databytes)
-            self.debug: print(f"Found handled message {hex(pid)}> {format_bytes(databytes)}")            
+            #if self.debug: print(f"Found handled message {hex(pid)}> {format_bytes(databytes)}")
+            #print(f"Found handled message {hex(pid)}> {databytes.hex(' ')}")
             return True
         except KeyError:
             # ... or exit with false
             return False
 
-    def parse_command_status(self, databytes):
+    lastPID_20 = bytearray(9)
+
+    def parse_status_20(self, databytes):  # PID 0x20  (0x20)
+        if self.lastPID_20 == databytes:
+            return
+        #print (f"pid_20 geändert alt:{format_bytes(self.lastPID_20)}")
+        #print (f"                neu:{databytes.hex(' ')}")
         data = {
-            "target_temp_room": cnv.temp_code_to_decimal(
-                databytes[0] | (databytes[1] & 0x0F) << 8
-            ),
-            "target_temp_water": cnv.temp_code_to_decimal(
-                databytes[2] << 4 | (databytes[1] & 0xF0) >> 4
-            ),
-            "energy_mix": self.map_or_debug(self.ENERGY_MIX_MAPPING, databytes[3]),
+            "target_temp_room": cnv.temp_code_to_decimal(databytes[0] | (databytes[1] & 0x0F) << 8),
+            "target_temp_water":  cnv.temp_code_to_decimal(databytes[2] << 4 | (databytes[1] & 0xF0) >> 4),
+            "energy_mix":  self.map_or_debug(self.ENERGY_MIX_MAPPING, databytes[3]),
             "energy_mode": self.map_or_debug(self.ENERGY_MODE_MAPPING, databytes[4]),
-            "energy_mode_2": self.map_or_debug(
-                self.ENERGY_MODE_2_MAPPING,
-                databytes[5] & 0x0F,
-            ),
-            "vent_mode": self.map_or_debug(self.VENT_MODE_MAPPING, databytes[5] >> 4),
-            "pid_20_unknown_byte_6": hex(databytes[6]),
-            "pid_20_unknown_byte_7": hex(databytes[7]),
+            "energy_mode_2": self.map_or_debug(self.ENERGY_MODE_2_MAPPING, databytes[5] & 0x0F,),
+            "vent_mode":  self.map_or_debug(self.VENT_MODE_MAPPING, databytes[5] >> 4),
+            # "pid_20_unknown_byte_6": hex(databytes[6]),
+            # "pid_20_unknown_byte_7": hex(databytes[7]),
+            "PID_20": format_bytes(databytes)  # für diagnosezwecke
         }
-
+        if self.debug:
+            print(f"Handled message PID_20 > {databytes.hex(' ')}")
+        self.lastPID_20[:] = databytes
         self.display_status.update(data)
+        self.display_status_updated = True
 
-    def parse_status_1(self, databytes):
+    lastPID_21 = bytearray(9)
+
+    def parse_status_21(self, databytes):  # PID 0x21  (0x61)
+        if self.lastPID_21 == databytes:
+            return
+        #print (f"pid_21 geändert alt:{format_bytes(self.lastPID_21)}")
+        #print (f"                neu:{databytes.hex(' ')}")
         data = {
-            "current_temp_room": cnv.temp_code_to_decimal(
-                databytes[0] | (databytes[1] & 0x0F) << 8
-            ),
-            "current_temp_water": cnv.temp_code_to_decimal(
-                databytes[2] << 4 | (databytes[1] & 0xF0) >> 4
-            ),
-            "pid_21_unknown_byte_3": hex(databytes[3]),
-            "pid_21_unknown_byte_4": hex(databytes[4]),
-            "vent_or_something_status": self.map_or_debug(
-                self.VENT_OR_OPERATING_STATUS,
-                databytes[5],
-            ),
-            "pid_21_unknown_byte_6": hex(databytes[6]),
-            "pid_21_unknown_byte_7": hex(databytes[7]),
+            "target_temp_room":  cnv.temp_code_to_decimal(databytes[0] | (databytes[1] & 0x0F) << 8),
+            "target_temp_water":  cnv.temp_code_to_decimal(databytes[2] << 4 | (databytes[1] & 0xF0) >> 4),
+            # "pid_21_unknown_byte_3": hex(databytes[3]),
+            # "pid_21_unknown_byte_4": hex(databytes[4]),
+            "vent_or_something_status": self.map_or_debug(self.VENT_OR_OPERATING_STATUS,databytes[5]),
+            # "pid_21_unknown_byte_6": hex(databytes[6]),
+            # "pid_21_unknown_byte_7": hex(databytes[7]),
+            "PID_21": format_bytes(databytes)  # für diagnosezwecke
         }
-
+        if self.debug:
+            print(f"Handled message PID_21 > {databytes.hex(' ')}")
+        self.lastPID_21[:] = databytes
         self.display_status.update(data)
+        self.display_status_updated = True
 
-    def parse_status_2(self, databytes):
+    lastPID_22 = bytearray(9)
+
+    def parse_status_22(self, databytes):  # PID 0x22  (0xE2)
+        if self.lastPID_22 == databytes:
+            return
+        #print (f"pid_22 geändert alt:{format_bytes(self.lastPID_22)}")
+        #print (f"                neu:{databytes.hex(' ')}")
         data = {
-            "voltage": str(
-                (Decimal(databytes[0]) / Decimal(10)).quantize(Decimal("0.1"))
-            ),
-            "cp_plus_display_status": self.map_or_debug(
-                self.CP_PLUS_DISPLAY_STATUS_MAPPING,
-                databytes[1],
-            ),
-            "heating_status": self.map_or_debug(
-                self.HEATING_STATUS_MAPPING, databytes[2]
-            ),
-            "heating_status_2": self.map_or_debug(
-                self.HEATING_STATUS_2_MAPPING, databytes[3]
-            ),
-            "pid_22_unknown_byte_4": hex(databytes[4]),
-            "pid_22_unknown_byte_5": hex(databytes[5]),
-            "pid_22_unknown_byte_6": hex(databytes[6]),
-            "pid_22_unknown_byte_7": hex(databytes[7]),
+            "voltage":   str(round((databytes[0] / 10.0), 1)),
+            "cp_plus_display_status":  self.map_or_debug(self.CP_PLUS_DISPLAY_STATUS_MAPPING, databytes[1]),
+            "heating_status":  self.map_or_debug(self.HEATING_STATUS_MAPPING, databytes[2]),
+            "heating_status_2":   self.map_or_debug(self.HEATING_STATUS_2_MAPPING, databytes[3]),
+            # "pid_22_unknown_byte_4": hex(databytes[4]),
+            # "pid_22_unknown_byte_5": hex(databytes[5]),
+            # "pid_22_unknown_byte_6": hex(databytes[6]),
+            # "pid_22_unknown_byte_7": hex(databytes[7]),
+            "PID_22": format_bytes(databytes)  # für diagnosezwecke
         }
-
+        if self.debug:
+            print(f"Handled message PID_22 > {databytes.hex(' ')}")
+        self.lastPID_22[:] = databytes
         self.display_status.update(data)
+        self.display_status_updated = True
 
     def process_status_buffer_update(self, buf_id, status_buffer):
-        if self.debug: print(f"Status ID[{buf_id}] data: {status_buffer}")
+        if self.debug:
+            print(f"Status ID[{buf_id}] data: {status_buffer}")
 
-        if not(buf_id in self.STATUS_BUFFER_TYPES.keys()):
-            if self.debug: print("unkown buffer type - no processing")
+        if not (buf_id in self.STATUS_BUFFER_TYPES.keys()):
+            if self.debug:
+                print("unkown buffer type - no processing")
             return
-        
+
         status_buffer_map = self.STATUS_BUFFER_TYPES[buf_id]
         parsed_status_buffer = {}
 
         val = 0
-        
+
         keys = list(status_buffer_map.keys())
-        keys.sort()       
+        keys.sort()
         for key in keys:
             val_a = val
             val += status_buffer_map[key][1]
@@ -334,21 +350,20 @@ class InetboxApp:
                 status_key = status_buffer_map[key][0]
                 if (status_key == "display"):
                     parsed_status_buffer[status_key] = [status_buffer[val_a:val].hex(" "), True]
-                else:                    
-                    parsed_status_buffer[status_key] = [int.from_bytes(status_buffer[val_a:val],"little"), True]
-        
+                else:
+                    parsed_status_buffer[status_key] = [int.from_bytes(status_buffer[val_a:val], "little"), True]
+
         self.status.update(parsed_status_buffer)
 #        print(self.status)
-        
 
     def _get_status_buffer_for_writing(self):
         # right now, we only send this one type of buffer
 
         if not self.upload_buffer:
             return None
-        
+
         status_buffer_map = self.STATUS_BUFFER_TYPES[self.STATUS_BUFFER_HEADER_WRITE_STATUS]
-        
+
         # increase output message counter
         self.status["command_counter"] = [(self.status["command_counter"][0] + 1) % 0xFF, True]
         self.status["checksum"] = [0, True]
@@ -371,7 +386,8 @@ class InetboxApp:
 #         except KeyError:
 #             self.updates_to_send = False
 #             return None
-        if self.debug: print(f"result of status-transfer: {binary_buffer_contents.hex(" ")}")
+        if self.debug:
+            print(f"result of status-transfer: {binary_buffer_contents.hex(' ')}")
 
 # calculate checksum
         self.status["checksum"] = [calculate_checksum(
@@ -379,7 +395,7 @@ class InetboxApp:
                 self.STATUS_BUFFER_PREAMBLE
                 + self.STATUS_BUFFER_HEADER_WRITE_STATUS
                 + binary_buffer_contents
-            )[self.STATUS_HEADER_CHECKSUM_START :]  
+            )[self.STATUS_HEADER_CHECKSUM_START:]
         ), True]
 
 #        try:
@@ -408,53 +424,56 @@ class InetboxApp:
             bytearray([0x03, 0x24]) + send_buffer[18:24],
             bytearray([0x03, 0x25]) + send_buffer[24:30],
             bytearray([0x03, 0x26]) + send_buffer[30:36],
-             ]
-        for q in s: 
-         cs = calculate_checksum(q)
-         q.append(cs)
-         if self.debug: print(q.hex(" "))
-        
+        ]
+        for q in s:
+            cs = calculate_checksum(q)
+            q.append(cs)
+            if self.debug:
+                print(q.hex(" "))
+
         return s
-    
+
     # This is the small api to the mqtt-engine
     # I changed the logic slightly, in the MAP-Definition it can be changed
     def get_status(self, key):
         # return the respective key from self.status, if it exists, and apply the conversion function
-#         if key not in self.status:
-#             raise KeyError
-#         if key.startswith("_"):
-#             return f"unknown - {self.status[key]} = {hex(self.status[key])}"
+        #         if key not in self.status:
+        #             raise KeyError
+        #         if key.startswith("_"):
+        #             return f"unknown - {self.status[key]} = {hex(self.status[key])}"
         if key not in self.STATUS_CONVERSION_FUNCTIONS:
-#            self.log.warning(f"Conversion function not defined - this key {key} isn't defined?")
+            #            self.log.warning(f"Conversion function not defined - this key {key} isn't defined?")
             raise Exception(f"Conversion function not defined - this key {key} isn't defined?")
         if self.STATUS_CONVERSION_FUNCTIONS[key] is None:
-#            self.log.warning(f"Conversion function not defined - this key {key} isn't readable")
-           raise Exception(f"Conversion function not defined - this key {key} isn't readable")
+            #            self.log.warning(f"Conversion function not defined - this key {key} isn't readable")
+            raise Exception(f"Conversion function not defined - this key {key} isn't readable")
         return self.STATUS_CONVERSION_FUNCTIONS[key][0](self.status[key][0])
 
     def set_status(self, key, value):
         # set the respective key in self.status, if it exists, and apply the conversion function
         # Hidden keys - no need for storage
         # With setting the status, the send-flag will be activated
-#        if key == "command_counter" or key == "checksum" :
-#            self.status[key] = [value, True]
+        #        if key == "command_counter" or key == "checksum" :
+        #            self.status[key] = [value, True]
         #    self.updates_to_send = True
-#            return
+        #            return
         if key not in self.STATUS_CONVERSION_FUNCTIONS:
             raise Exception(f"Conversion function not defined - this key {key} isn't defined?")
         if self.STATUS_CONVERSION_FUNCTIONS[key] is None:
             raise Exception(f"Conversion function not defined - this key {key} isn't writeable?")
 #        self.log.info(f"Setting {key} to {value}")
-        if self.debug: print(f"set_status: {key}:{value}")
+        if self.debug:
+            print(f"set_status: {key}:{value}")
         self.status[key] = [self.STATUS_CONVERSION_FUNCTIONS[key][1](value), True]
         self.upload_buffer = True
 
 
 # Status-Dump - with False, it sends all status-values
 # with True it sends only a list of changed values - but reset the chance-flag
+
     def get_all(self, only_updates):
-#        print("Status:", self.status)
-        if not(only_updates):
+        #        print("Status:", self.status)
+        if not (only_updates):
             self.status_updated = False
             return {key: self.get_status(key) for key in self.status.keys()}
         else:
@@ -465,6 +484,4 @@ class InetboxApp:
                     self.status[key][1] = False
                     self.status_updated = True
                     s.update({key: self.get_status(key)})
-            return s        
-        
-
+            return s

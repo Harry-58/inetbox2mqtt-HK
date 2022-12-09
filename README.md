@@ -13,7 +13,7 @@
                     Del.r     alle gelesenen SMS löschen
                     Del.a     alle SMS löschen
                     Status    Status InetBox abfragen.
-                                Antwort-SMS: ttr:x;ctr;x;ttw:x;ctw:x;hm:x;os:x;U:x;err:x:lin:x;mqtt:x
+                                Antwort-SMS: ttr:x; ctr:x  ttw:x; ctw:x  hm:x; os:x  U:x; err:x  rW:xx; rG:xx  lin:x; mqtt:x
                                    ttr=target_temp_room   ctr=current_temp_room
                                    ttw=target_temp_water  ctw=current_temp_water
                                    hm=heating_mode        os= operating_status
@@ -23,7 +23,8 @@
 
                     Eine SMS wird nur von den in "erlaubteAbsender" eingetragenen Nummern angenommen.
 
-        Es erfolgt keine automatische Rückmeldung über SMS. Man sieht nur anhand der MQTT-Meldungen bzw. Print-Ausgaben ob erfolgreich.
+        Es erfolgt keine automatische Rückmeldung über SMS.   
+        Man sieht nur anhand der MQTT-Meldungen bzw. Print-Ausgaben ob erfolgreich.  
         Der Status der InetBox kann mit der Status-SMS angefordert werden.
 
 
