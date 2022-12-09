@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2022  Harry Konz
+# Copyright (c) 2022  Harry Konz   ( https://github.com/Harry-58 )
 #
 #
 #

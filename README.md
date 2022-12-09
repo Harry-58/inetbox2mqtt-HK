@@ -23,8 +23,8 @@
 
                     Eine SMS wird nur von den in "erlaubteAbsender" eingetragenen Nummern angenommen.
 
-        Es erfolgt keine automatische Rückmeldung über SMS.   
-        Man sieht nur anhand der MQTT-Meldungen bzw. Print-Ausgaben ob erfolgreich.  
+        Es erfolgt keine automatische Rückmeldung über SMS.
+        Man sieht nur anhand der MQTT-Meldungen bzw. Print-Ausgaben ob erfolgreich.
         Der Status der InetBox kann mit der Status-SMS angefordert werden.
 
 
@@ -185,5 +185,5 @@ Ein Programmabbruch funktioniert mit Ctrl-C. Da die Dateien so aufgesetzt sind, 
  muss zunächst das Programm unterbrochen werden. Das erfolgt mit ctrl-C. Danach hat man mit Thonny die volle Kontrolle und kann die Dateien ändern, speichern und ausführen
 
 -------------------------
-
+https://www.micropython.org/
 https://awesome-micropython.com/

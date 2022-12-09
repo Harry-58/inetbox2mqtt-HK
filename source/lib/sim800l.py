@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2022  Harry Konz   ( https://github.com/Harry-58/inetbox2mqtt)
+# Copyright (c) 2022  Harry Konz   ( https://github.com/Harry-58 )
 #
 # unter Verwendung von  https://github.com/olablt/micropython-sim800
 
