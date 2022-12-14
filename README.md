@@ -3,17 +3,17 @@
 
    Durch senden einer SMS kann die Truma-Heizung gesteuert werden.
 
-      mögliche SMS: T.nn      Raumtemperatur wird auf den Wert nn, und der heating_mode auf eco gesetzt
-                               Erlaubte Werte für nn:  0-4=aus, 5-30
-                    B.nn      Boiler (Warmwasser)  wird auf den Wert nn gesetzt.
-                               Erlaubte Werte für nn:  0=aus, 40=eco, 60=high, 200=boost
+      mögliche SMS: T.nn [?]    Raumtemperatur wird auf den Wert nn, und der heating_mode auf eco gesetzt
+                                Erlaubte Werte für nn:  0-4=aus, 5-30
+                    B.nn [?]    Boiler (Warmwasser)  wird auf den Wert nn gesetzt.
+                                Erlaubte Werte für nn:  0=aus, 40=eco, 60=high, 200=boost
 
-                    S.        SMS Speicherbelegung auflisten
-                    L.a/u/r   SMS auflisten  a=alle  u=ungelesene  r=gelesene
-                    Del.r     alle gelesenen SMS löschen
-                    Del.a     alle SMS löschen
-                    Status    Status InetBox abfragen.
-                                Antwort-SMS: ttr:x; ctr:x  ttw:x; ctw:x  hm:x; os:x  U:x; err:x  rW:xx; rG:xx  lin:x; mqtt:x
+                    S. [?]      SMS Speicherbelegung auflisten
+                    L.a/u/r [?] SMS auflisten  a=alle  u=ungelesene  r=gelesene
+                    Del.r  [?]  alle gelesenen SMS löschen
+                    Del.a  [?]  alle SMS löschen
+                    Status      Status InetBox abfragen.
+                                 Antwort-SMS: ttr:x; ctr:x ttw:x; ctw:x hm:x; os:x U:x; err:x rW:xx; rG:xx lin:x; mqtt:x
                                    ttr=target_temp_room   ctr=current_temp_room
                                    ttw=target_temp_water  ctw=current_temp_water
                                    hm=heating_mode        os= operating_status
@@ -23,9 +23,9 @@
 
                     Eine SMS wird nur von den in "erlaubteAbsender" eingetragenen Nummern angenommen.
 
-        Es erfolgt keine automatische Rückmeldung über SMS.
-        Man sieht nur anhand der MQTT-Meldungen bzw. Print-Ausgaben ob erfolgreich.
-        Der Status der InetBox kann mit der Status-SMS angefordert werden.
+        Das Ergebniss einer SMS sieht man anhand der MQTT-Meldungen bzw. Print-Ausgaben.
+        Soll das Ergebniss als SMS zurückgesendet werden, muss hinter den Befehl ein "?" geschrieben werden (z.B: T.15? ).
+        Die Anwort-SMS wird bei den T/B SMSen erst nach 1min zurückgesendet, weil die Truma verzögert reagiert.
 
 
 Die Hauptfunktionen zur SMS-Steuerung sind in den Programmen
