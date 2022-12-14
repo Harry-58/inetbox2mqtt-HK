@@ -150,7 +150,7 @@ Damit lässt sich das ganze Projekt in einem Zug auf den ESP32 flashen.
  Ansonsten kann der Port natürlich mit vorgegeben werden. Der ESP muss sich im Programmiermodus (GPIO0 auf Masse beim Starten) befinden.
  Kommando ist: *esptool  write_flash 0 flash_dump_esp32_lin_v08_4M.bin*
 
-Nach dem Flashen bitte den Chip rebooten und mit einem seriellen Terminal (miniterm, putty, serialport) verbinden (Baudrate: 115700).
+Nach dem Flashen bitte den Chip rebooten und mit einem seriellen Terminal (miniterm, putty, serialport) verbinden (Baudrate: 115200).
 
 Der Chip meldet sich dann und es werden die Credentials abgefragt. Diese werden dann in eine Datei geschrieben
  und der Vorgang muss nicht wiederholt werden.
