@@ -345,9 +345,9 @@ class sim800l:
             if result:
                 if result[0:5] == "+CCLK":  # +CCLK: "22/11/15,09:10:53+04"
                     dateTime = result.split('"')[1]
-                    dateTime = dateTime[:-3]  # Zeitzone (+04) entfernen
+                    # dateTime = dateTime[:-3]  # Zeitzone (+04) entfernen
                     dateTime = dateTime.replace("/", "-")
-                    return dateTime
+                    # return dateTime
         except Exception as e:
             log.exc(e, "")
         return ''
