@@ -16,17 +16,17 @@
 #   durch senden einer SMS kann die Truma-Heizung gesteuert werden.
 #   Eine SMS wird nur von den in "erlaubteAbsender" eingetragenen Nummern angenommen.
 #
-#   mögliche SMS:  T.nn      Raumtemperatur wird auf den Wert nn, und der heating_mode auf eco gesetzt
+#   mögliche SMS:  T.nn [?]     Raumtemperatur wird auf den Wert nn, und der heating_mode auf eco gesetzt
 #                               Erlaubte Werte für nn:  0-4=aus, 5-30
-#                  B.nn      Boiler (Warmwasser)  wird auf den Wert nn gesetzt.
+#                  B.nn [?]     Boiler (Warmwasser)  wird auf den Wert nn gesetzt.
 #                               Erlaubte Werte für nn:  0=aus, 40=eco, 60=high, 200=boost
 #
-#                  S.        SMS Speicherbelegung auflisten
-#                  L.a/u/r   SMS auflisten  a=alle  u=ungelesene  r=gelesene
-#                  Del.r     alle gelesenen SMS löschen
-#                  Del.a     alle SMS löschen
-#                  Status    Status InetBox abfragen.
-#                               Antwort-SMS: ttr:x; ctr:x  ttw:x; ctw:x  hm:x; os:x  U:x; err:x  rW:xx; rG:xx  lin:x; mqtt:x
+#                  S. [?]       SMS Speicherbelegung auflisten
+#                  L.a/u/r [?]  SMS auflisten  a=alle  u=ungelesene  r=gelesene
+#                  Del.r [?]    alle gelesenen SMS löschen
+#                  Del.a  [?]   alle SMS löschen
+#                  Status       Status InetBox abfragen.
+#                                 Antwort-SMS: ttr:x; ctr:x  ttw:x; ctw:x  hm:x; os:x  U:x; err:x  rW:xx; rG:xx  lin:x; mqtt:x
 #                                   ttr=target_temp_room   ctr=current_temp_room
 #                                   ttw=target_temp_water  ctw=current_temp_water
 #                                   hm=heating_mode        os= operating_status
@@ -34,9 +34,9 @@
 #                                   rW=rssi-Wifi           rG=rssi-GSM
 #                                   lin=alive              mqtt=On-/Offline
 #
-#   Es erfolgt keine automatische Rückmeldung über SMS. Man sieht nur anhand der MQTT-Meldungen bzw. Print-Ausgaben ob erfolgreich.
-#   Der Status der InetBox kann mit der Status-SMS angefordert werden.
-#
+#   Das Ergebniss einer SMS sieht man anhand der MQTT-Meldungen bzw. Print-Ausgaben.
+#   Soll das Ergebniss als SMS zurückgesendet werden, muss hinter den Befehl ein "?" geschrieben werden (z.B: T.15? ).
+#   Die Anwort-SMS wird bei den T/B SMSen erst nach 1min zurückgesendet, weil die Truma verzögert reagiert.
 #
 
 
@@ -91,7 +91,7 @@ class gsm:
     # mit Landesvorwahl
     # wenn in __init__  Telefonnummern übergeben werden, wird die Liste überschrieben
 
-    app = None
+    inetApp = None
     debug = False
     info = True
     pin = None
@@ -99,8 +99,8 @@ class gsm:
     debug_sim = False
 
     stop_async = False
-    loop_cnt_Minute = 20000  # etwa 1-Minute
-    loop_cnt = loop_cnt_Minute - 1000
+    loop_cnt_Minute = 2000  # etwa 1-Minute
+    loop_cnt = loop_cnt_Minute - 100
 
     sim = sim(serial_sim800, RST_PIN, debug_sim)
 
@@ -112,7 +112,7 @@ class gsm:
               'rssi':      [0, False]}
 
     def __init__(self, inetApp, telNr, pin=None, debug=False):
-        self.app = inetApp
+        self.inetApp = inetApp
         self.debug = debug
         log.setLevel(logLevel)
         self.pin = pin
@@ -265,10 +265,10 @@ class gsm:
     async def setTruma(self, topic, msg):
         topic = str(topic)
         msg = str(msg)
-        log.debug(f"setTruma:{topic}={msg}" )
-        if topic in self.app.status.keys():
+        log.debug(f"setTruma:{topic}={msg}")
+        if topic in self.inetApp.status.keys():
             try:
-                self.app.set_status(topic, msg)
+                self.inetApp.set_status(topic, msg)
             except Exception as e:
                 log.exc(e, "")
         else:
@@ -336,7 +336,7 @@ class gsm:
         try:
             if line.startswith('+CMT:'):  # +CMT: "+491751234567","","22/12/07,13:05:16+04"
                 params = line.split('"', 6)
-                print (f"CMT-params: { params}  {len(params)}")
+                log.debug(f"CMT-params: { params}  {len(params)}")
                 if len(params) > 5:
                     absender = params[1]
                     smsTime = params[5]
@@ -352,7 +352,7 @@ class gsm:
                     return
             elif line.startswith('+CMTI:'):  # +CMTI: "ME",21
                 params = line.split(',')
-                print (f"CMTI-params: { params}  {len(params)}")
+                log.debug(f"CMTI-params: { params}  {len(params)}")
                 if len(params) > 1:
                     index = params[1].strip("'")
                     # print(f"index:{index}")
@@ -367,8 +367,6 @@ class gsm:
             log.info(f"SMS:von:{absender} um:{smsTime} msg:{nachricht}")
             if absender in self.erlaubteAbsender:  # Absender erlaubt
                 self.set_status('nachricht', f"von:{absender} um:{smsTime} msg:{nachricht}")
-                # SMS-Time  22-11-15,09:10:50
-                # 012345678901234567890
                 actTime = await self.sim.date_time()  # 22-11-15,09:12:30
                 #print (f"actTime:{actTime}")
                 delta = self.timeDiff(actTime, smsTime)
@@ -377,15 +375,23 @@ class gsm:
                     log.debug("SMS zulässig")
                     nachricht = nachricht.strip().lower()
                     if nachricht.startswith("t.") or nachricht.startswith("b."):  # Raum- und Wassertemperatur setzen
-                        await self.doTruma(nachricht)
+                        await self.doTruma(absender, nachricht)
                         if index != -1:
                             await self.sim.deleteSms(index)
                     elif nachricht.startswith("s."):    #
                         if index != -1:
                             await self.sim.deleteSms(index)
-                        erg = await self.sim.getSmsSpeicher()  # SMS Speicherbelegung anzeigen
+                        erg = await self.sim.getSmsSpeicher()  # SMS Speicherbelegung abrufen
                         log.debug(f"SMS-Speicher: { erg }")
                         self.set_status('speicher', erg)
+                        if nachricht.endswith("?"):  # Antwort-SMS wird erwartet
+                            params = erg.split(",")  # "ME",1,50,"ME",1,50,"ME",1,50
+                            if len(params) > 2:
+                                msg = f"SMS-Speicherbelegung: {params[1]} von {params[2]}"
+                            else:
+                                msg = "Speicherbelegung unbekannt"
+                            if not await self.sim.sendSms(absender,  erg):
+                                log.error("Fehler beim senden Speicher-SMS")
                     elif nachricht.startswith("l."):      # SMS auflisten
                         if index != -1:
                             await self.sim.deleteSms(index)
@@ -397,14 +403,28 @@ class gsm:
                             erg = await self.sim.listSms(2)
                         else:                               # wenn ohne stat dann ungelesene
                             erg = await self.sim.listSms(1)
+                        Anzahl_Read = 0
+                        Anzahl_UnRead = 0
                         for i in range(len(erg)):
+                            if erg.find("UNREAD") >= 0:
+                                Anzahl_UnRead = +1
+                            elif erg.find("READ") >= 0:
+                                Anzahl_Read = +1
                             log.debug(f"sms[{i}]={erg[i]}")
                         self.set_status('nachricht', json.dumps(erg))  # ohne json werden Umlaute in hex konvertiert
-
+                        if nachricht.endswith("?"):  # Antwort-SMS wird erwartet
+                            msg = f"SMS-gelesen:   {Anzahl_Read}\nSMS-ungelesen: {Anzahl_UnRead}"
+                            if not await self.sim.sendSms(absender, msg):
+                                log.error("Fehler beim senden Speicher-SMS")
                     elif nachricht.startswith("del.r"):  # alle gelesenen SMS löschen
-                        await self.sim.deleteSms("READ")
+                        erg = await self.sim.deleteSms("READ")
                     elif nachricht.startswith("del.a"):  # alle SMS löschen
-                        await self.sim.deleteSms("ALL")
+                        erg = await self.sim.deleteSms("ALL")
+                    log.debug(f"SMS-Speicher löschen: {erg}")
+                    if nachricht.endswith("?"):  # Antwort-SMS wird erwartet
+                        msg = "SMS-Speicher gelöscht"
+                        if not await self.sim.sendSms(absender, msg):
+                            log.error("Fehler beim senden Speicher-SMS")
                     elif nachricht.startswith("status"):  # Truma-Status abfragen
                         await self.doStatus(absender)
                         if index != -1:
@@ -420,7 +440,7 @@ class gsm:
         except Exception as e:
             log.exc(e, "")
 
-    async def doTruma(self, nachricht):
+    async def doTruma(self, absender, nachricht):
         try:
             if nachricht.startswith("t."):  # t-15  (0-30)
                 temp = nachricht[2:]
@@ -445,26 +465,32 @@ class gsm:
                 await self.setWater(boil)
             else:
                 log.warning(f"truma_unbekannt: {nachricht}")
+                return
+            if nachricht.endswith("?"):  # Antwort-SMS wird erwartet
+                asyncio.create_task(self.doStatus(absender, 60))  # Status verzögert senden, da Truma den Befehl erst verarbeiten muss
         except Exception as e:
             log.exc(e, "")
 
-    async def doStatus(self, absender):
+    async def doStatus(self, absender, delay=0):
+        if delay > 0:
+            log.debug(f"doStatus verzögert um {delay}s")
+            await asyncio.sleep(delay)
         try:
             log.debug("Status als SMS senden")  # self.app.status['target_temp_room'][0]
-            msg = 'ttr:' + self.app.get_status('target_temp_room') + \
-                '; ctr:' + self.app.get_status('current_temp_room') + \
-                '\nttw:' + self.app.get_status('target_temp_water') + \
-                '; ctw:' + self.app.get_status('current_temp_water') + \
-                '\nhm:' + self.app.get_status('heating_mode') + \
-                '; os:' + self.app.get_status('operating_status') + \
-                '\nU:' + str(self.app.get_status('spannung')) + \
-                '; err:' + self.app.get_status('error_code') + \
-                '\nrW:' + str(self.app.get_status('rssi')) + \
-                '; rG:' + self.get_status('rssi') + \
-                '\nlin:' + self.app.get_status('alive') + \
+            msg = 'ttr:' + self.inetApp.get_status('target_temp_room') + \
+                '; ctr:' + self.inetApp.get_status('current_temp_room') + \
+                '\nttw:' + self.inetApp.get_status('target_temp_water') + \
+                '; ctw:' + self.inetApp.get_status('current_temp_water') + \
+                '\nhm:' + self.inetApp.get_status('heating_mode') + \
+                '; os:' + self.inetApp.get_status('operating_status') + \
+                '\nU:' + str(self.inetApp.get_status('spannung')) + \
+                '; err:' + self.inetApp.get_status('error_code') + \
+                '\nrW:' + str(self.inetApp.get_status('rssi')) + \
+                '; rG:' + str(self.get_status('rssi')) + \
+                '\nlin:' + self.inetApp.get_status('alive') + \
                 '; mqtt:' + ("ON" if get_led("MQTT") == 1 else "OFF")
-            print(msg)
+            log.debug(msg)
             if not await self.sim.sendSms(absender,  msg):
-                log.error("Fehler beim senden SMS")
+                log.error("Fehler beim senden Status-SMS")
         except Exception as e:
             log.exc(e, "")
