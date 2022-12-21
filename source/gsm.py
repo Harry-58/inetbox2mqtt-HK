@@ -36,7 +36,7 @@
 #
 #   Das Ergebniss einer SMS sieht man anhand der MQTT-Meldungen bzw. Print-Ausgaben.
 #   Soll das Ergebniss als SMS zurückgesendet werden, muss hinter den Befehl ein "?" geschrieben werden (z.B: T.15? ).
-#   Die Anwort-SMS wird bei den T/B SMSen erst nach 1min zurückgesendet, weil die Truma verzögert reagiert.
+#   Die Anwort-SMS wird bei den T/B SMSen erst nach 30sec zurückgesendet, weil die Truma verzögert reagiert.
 #
 
 
