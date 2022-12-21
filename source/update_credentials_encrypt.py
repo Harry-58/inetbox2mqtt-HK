@@ -38,7 +38,6 @@ TELNR = ""
 
 if find(CREDENTIALS, "/"):
     print(" credentials load from Disk")
-    fn = open(CREDENTIALS, "rb")
     c = crypt()
     MQTT = c.get_decrypt_key(CREDENTIALS, "MQTT")
     SSID = c.get_decrypt_key(CREDENTIALS, "SSID")
@@ -49,7 +48,6 @@ if find(CREDENTIALS, "/"):
     PIN = c.get_decrypt_key(CREDENTIALS, "PIN")
     TELNR = c.get_decrypt_key(CREDENTIALS, "TELNR")
 
-    fn.close()
     a = ""
     while a != "yes":
         print("Fill in your credentials:")
