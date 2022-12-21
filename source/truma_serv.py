@@ -38,10 +38,10 @@ import time
 from machine import UART, Pin, I2C
 import logging
 
-checkMem = False   #HK: zur Überwachung der Speichernutzung
+checkMem = False  # HK: zur Überwachung der Speichernutzung
 if checkMem:
     import micropython
-    import gc #https://forum.micropython.org/viewtopic.php?t=1747  https://docs.micropython.org/en/latest/develop/memorymgt.html
+    import gc  # https://forum.micropython.org/viewtopic.php?t=1747  https://docs.micropython.org/en/latest/develop/memorymgt.html
 
 
 debug_lin = False
@@ -121,7 +121,7 @@ if activate_spiritlevel:
         time.sleep(1.5)
         sl = spirit_level(i2c)
     except Exception as e:
-        log.exc(e,"")
+        log.exc(e, "")
         sl = None
         activate_spiritlevel = False
 else:
@@ -176,7 +176,7 @@ def callback(topic, msg, retained, qos):
             try:
                 lin.app.set_status(topic, msg)
             except Exception as e:
-                log.exc(e,"")
+                log.exc(e, "")
                 # send via mqtt
         elif not (dc == None):
             if topic in dc.status.keys():
@@ -184,7 +184,7 @@ def callback(topic, msg, retained, qos):
                 try:
                     dc.set_status(topic, msg)
                 except Exception as e:
-                    log.exc(e,"")
+                    log.exc(e, "")
                     # send via mqtt
             else:
                 print("key incl. dc is unkown")
@@ -279,9 +279,9 @@ async def main(client):
         await asyncio.sleep(10)  # Update every 10sec
         if checkMem:   # Speicher überwachen   https://docs.micropython.org/en/latest/reference/constrained.html#the-heap
             micropython.mem_info()
-            mem=gc.mem_free()
+            mem = gc.mem_free()
             if mem < 20000:
-                gc.collect()    #Speicher aufräumen
+                gc.collect()  # Speicher aufräumen
                 print(f"mem_free:{mem} --> {gc.mem_free()}")
 
         s = lin.app.get_all(True)
@@ -322,8 +322,8 @@ async def main(client):
         # loop-count
         i += 1
         if not (i % 6):  # jede Minute
-            #await client._ping_n_wait(client._proto)  #Verbindung aufrecht erhalten
-            #continue  # zum Test, um nachfolgende Meldungen zu unterdrücken
+            # await client._ping_n_wait(client._proto)  #Verbindung aufrecht erhalten
+            # continue  # zum Test, um nachfolgende Meldungen zu unterdrücken
 
             lin.app.status["alive"][1] = True   # Verbindungsstatus Truma
             await publish_displaystatus()       # Displaystatus
@@ -370,7 +370,7 @@ async def gsm_loop():
     while True:
         await gsm.loop_serial()
         if not (gsm.stop_async):
-            await asyncio.sleep_ms(1)
+            await asyncio.sleep_ms(5)
         else:
             print("GSM-loop stopped")
 
@@ -421,7 +421,7 @@ try:
 except KeyboardInterrupt:
     print("Abbruch durch Ctrl-C")
 except Exception as e:
-    log.exc(e,"")
+    log.exc(e, "")
 finally:
     set_led("MQTT", False)
     set_led("D8", False)
