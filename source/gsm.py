@@ -99,7 +99,7 @@ class gsm:
     debug_sim = False
 
     stop_async = False
-    loop_cnt_Minute = 2000  # etwa 1-Minute
+    loop_cnt_Minute = 8100  # etwa 1-Minute
     loop_cnt = loop_cnt_Minute - 100
 
     sim = sim(serial_sim800, RST_PIN, debug_sim)
@@ -171,7 +171,7 @@ class gsm:
         # SMS-Time 22-11-15,09:10:50
         # 01234567890123456789
         # ACT-Time 22-11-13,17:54:30
-        #  #print(f"tAct:{tAct}")
+        # print(f"tAct:{tAct}")
         # print(f"tSms:{tSms}")
         #         tag im Monat           stunden              minuten               sekunden
         ta = (int(tAct[6:8])*86400) + (int(tAct[9:11])*3600) + (int(tAct[12:14])*60) + int(tAct[15:17])
@@ -179,9 +179,9 @@ class gsm:
         # wenn tAct in anderem Monat als tSms liegt, kommt falsches delta
         return ta-ts
 
-    def testDelta(self):
-        delta = self.timeDiff("22-11-16,09:10:50", "22-11-16,09:10:33")
-        print(f"Test-Delta:{delta}")
+    # def testDelta(self):
+    #   delta = self.timeDiff("22-11-16,09:10:50", "22-11-16,09:10:33")
+    #   print(f"Test-Delta:{delta}")
 
     async def setup(self):
         try:
@@ -323,10 +323,6 @@ class gsm:
                             await self.doSMS(line)
                         elif line.startswith('+CIEV:'):  # +CIEV: 10,"26203","netzclub+","netzclub+", 0, 0
                             pass
-                        elif line.startswith('+XXXX:'):
-                            pass
-                        else:
-                            pass
         except Exception as e:
             log.exc(e, "")
 
@@ -389,7 +385,7 @@ class gsm:
                             if len(params) > 2:
                                 msg = f"SMS-Speicherbelegung: {params[1]} von {params[2]}"
                             else:
-                                msg = "Speicherbelegung unbekannt"
+                                msg = "SMS-Speicherbelegung unbekannt"
                             if not await self.sim.sendSms(absender,  erg):
                                 log.error("Fehler beim senden Speicher-SMS")
                     elif nachricht.startswith("l."):      # SMS auflisten
@@ -406,9 +402,9 @@ class gsm:
                         Anzahl_Read = 0
                         Anzahl_UnRead = 0
                         for i in range(len(erg)):
-                            if erg.find("UNREAD") >= 0:
+                            if erg[i].find("UNREAD") >= 0:
                                 Anzahl_UnRead = +1
-                            elif erg.find("READ") >= 0:
+                            elif erg[i].find("READ") >= 0:
                                 Anzahl_Read = +1
                             log.debug(f"sms[{i}]={erg[i]}")
                         self.set_status('nachricht', json.dumps(erg))  # ohne json werden Umlaute in hex konvertiert
@@ -416,15 +412,19 @@ class gsm:
                             msg = f"SMS-gelesen:   {Anzahl_Read}\nSMS-ungelesen: {Anzahl_UnRead}"
                             if not await self.sim.sendSms(absender, msg):
                                 log.error("Fehler beim senden Speicher-SMS")
-                    elif nachricht.startswith("del.r"):  # alle gelesenen SMS löschen
-                        erg = await self.sim.deleteSms("READ")
-                    elif nachricht.startswith("del.a"):  # alle SMS löschen
-                        erg = await self.sim.deleteSms("ALL")
-                    log.debug(f"SMS-Speicher löschen: {erg}")
-                    if nachricht.endswith("?"):  # Antwort-SMS wird erwartet
-                        msg = "SMS-Speicher gelöscht"
-                        if not await self.sim.sendSms(absender, msg):
-                            log.error("Fehler beim senden Speicher-SMS")
+                    elif nachricht.startswith("del."):  # SMS löschen
+                        if nachricht.startswith("del.r"):  # alle gelesenen SMS löschen
+                            erg = await self.sim.deleteSms("READ")
+                        elif nachricht.startswith("del.a"):  # alle SMS löschen
+                            erg = await self.sim.deleteSms("ALL")
+                        else:
+                            erg = await self.sim.deleteSms("READ")
+                        log.debug(f"SMS-Speicher löschen: {erg}")
+                        if nachricht.endswith("?"):  # Antwort-SMS wird erwartet
+                            msg = "SMS-Speicher geloescht"
+                            if not await self.sim.sendSms(absender, msg):
+                                log.error("Fehler beim senden Lösch-SMS")
+
                     elif nachricht.startswith("status"):  # Truma-Status abfragen
                         await self.doStatus(absender)
                         if index != -1:
