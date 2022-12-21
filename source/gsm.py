@@ -442,8 +442,8 @@ class gsm:
 
     async def doTruma(self, absender, nachricht):
         try:
-            if nachricht.startswith("t."):  # t-15  (0-30)
-                temp = nachricht[2:]
+            if nachricht.startswith("t."):  # t.15  (0-30)
+                temp = nachricht[2:].replace('?', '').strip()
                 if not temp.isdigit():
                     temp = 0
                 log.info(f"temp:{temp}")
@@ -455,8 +455,8 @@ class gsm:
                 if int(temp) > 30:
                     temp = 30  # maximal 30Grad möglich
                 await self.setHeat(temp, mode)
-            elif nachricht.startswith("b."):  # b-40  (0,40,60,200)
-                boil = nachricht[2:]
+            elif nachricht.startswith("b."):  # b.40  (0,40,60,200)
+                boil = nachricht[2:].replace('?', '').strip()
                 if not boil.isdigit():
                     boil = 0
                 if not boil in [0, 40, 60, 200]:
@@ -467,7 +467,7 @@ class gsm:
                 log.warning(f"truma_unbekannt: {nachricht}")
                 return
             if nachricht.endswith("?"):  # Antwort-SMS wird erwartet
-                asyncio.create_task(self.doStatus(absender, 60))  # Status verzögert senden, da Truma den Befehl erst verarbeiten muss
+                asyncio.create_task(self.doStatus(absender, 30))  # Status verzögert senden, da Truma den Befehl erst verarbeiten muss
         except Exception as e:
             log.exc(e, "")
 
