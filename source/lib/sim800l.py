@@ -321,7 +321,7 @@ class sim800l:
     async def sendSms(self, destno, msgtext):
         result = await self.command(f'AT+CMGS="{destno}"\r', '>', 15000)
         if result.startswith(">"):
-            result = await self.command(f'{msgtext}\x1A', 'OK', 15000)
+            result = await self.command(f'{msgtext}\x1A', '+CMGS:', 30000)
             if result.find("+CMGS:") > -1:
                 return True
         return False
@@ -347,7 +347,7 @@ class sim800l:
                     dateTime = result.split('"')[1]
                     # dateTime = dateTime[:-3]  # Zeitzone (+04) entfernen
                     dateTime = dateTime.replace("/", "-")
-                    # return dateTime
+                    return dateTime
         except Exception as e:
             log.exc(e, "")
         return ''
