@@ -97,10 +97,10 @@ class InetboxApp:
             3: ["target_temp_room", 2, True],
             4: ["heating_mode", 1, True],
             5: ["recv_status_u3", 1, False],
-            6: ["el_power_level", 2, True],
+            6: ["el_power_level", 2, False],
             7: ["target_temp_water", 2, True],
             8: ["el_power_level", 2, False],  # appears twice, we assume that it is the same
-            9: ["energy_mix", 1, True],
+            9: ["energy_mix", 1, False],
             10: ["energy_mix", 1, False],  # appears twice, we assume that it is the same
             11: ["current_temp_water", 2, True],
             12: ["current_temp_room", 2, True],
@@ -157,7 +157,7 @@ class InetboxApp:
         },
         STATUS_BUFFER_HEADER_02: {
             # mapping-table: key, subject, byte-len, storage
-            1: ["command_counter", 1, True]
+            1: ["command_counter", 1, False]
         },
         STATUS_BUFFER_HEADER_03: {
             # mapping-table: key, subject, byte-len, storage
@@ -219,8 +219,8 @@ class InetboxApp:
     }
 
     status = {'command_counter': [1, False], 'alive': ["OFF", True], 'target_temp_water': [0, True], 'checksum': [0, False],
-              'target_temp_room': [0, True], 'heating_mode': [0, True], 'el_power_level': [0, True],
-              'energy_mix': [1, True], 'current_temp_water': [0, True], 'current_temp_room': [0, True],
+              'target_temp_room': [0, True], 'heating_mode': [0, True], 'el_power_level': [0, False],
+              'energy_mix': [1, False], 'current_temp_water': [0, True], 'current_temp_room': [0, True],
               'operating_status': [0, True], 'error_code': [0, True],
               'rssi': [0, True], 'spannung': [0, False]}
 

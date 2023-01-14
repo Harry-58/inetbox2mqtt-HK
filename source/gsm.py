@@ -47,7 +47,7 @@ from sim800l import sim800l as sim
 import json
 import logging
 
-logLevel = logging.DEBUG
+logLevel = logging.INFO
 
 
 # TODO: Speicher reicht dafür nicht aus
@@ -195,17 +195,17 @@ class gsm:
                 await self.sim.setBaudrate(BAUDRATE)
 
                 simVorhanden = False
-                while not simVorhanden:
-                    simVorhanden = await self.sim.isSimInserted()
-                    if not simVorhanden:
-                        self.set_status('error', "SIM fehlt")
-                        await asyncio.sleep(600)
+                simVorhanden = await self.sim.isSimInserted()
+                if not simVorhanden:
+                    self.set_status('error', "SIM fehlt")
+                    await asyncio.sleep(600)
+                    continue  # Setup neu starten
 
                 pinStatus = await self.sim.pinStatus()  # prüfen ob Pin notwendig
                 if pinStatus > 0:
                     if len(self.pin) > 0:
                         await self.sim.setPin(self.pin)
-                while pinStatus != 0:        # ohne PIN/PUK geht nix
+                if pinStatus != 0:        # ohne PIN/PUK geht nix
                     pinStatus = await self.sim.pinStatus()
                     if pinStatus == 0:
                         print("PIN ok")
@@ -219,6 +219,7 @@ class gsm:
                     log.error(msg)
                     self.set_status('error', msg)
                     await asyncio.sleep(600)
+                    continue   # Setup neu starten
 
                 await self.sim.setup()
                 imNetz = await self.sim.isRegistered()
@@ -317,10 +318,8 @@ class gsm:
                             #self.set_status('netname', erg)
                             # rssi = await self.sim.getRSSI()
                             #self.set_status('rssi', rssi)
-                        elif line.startswith('+CMTI:'):  # SMS empfangen indirekt, SMS steht im Speicher  +CMGR: "REC UNREAD","+4917512345678","","22/12/07,12:32:01+04"\rTest1
-                            await self.doSMS(line)
-                        elif line.startswith('+CMT:'):   # SMS empfangen direkt                            +CMT: "+4917512345678","","22/12/07,12:29:50+04"
-                            await self.doSMS(line)
+                        elif line.startswith('+CMTI:') or line.startswith('+CMT:'):  # SMS empfangen indirekt, SMS steht im Speicher  +CMGR: "REC UNREAD","+4917512345678","","22/12/07,12:32:01+04"\rTest1
+                            await self.doSMS(line)                                   # SMS empfangen direkt                           +CMT: "+4917512345678","","22/12/07,12:29:50+04"
                         elif line.startswith('+CIEV:'):  # +CIEV: 10,"26203","netzclub+","netzclub+", 0, 0
                             pass
         except Exception as e:
@@ -328,6 +327,7 @@ class gsm:
 
 # https://websms.de/de-de/blog/sms-codierung-warum-eine-sms-70-oder-160-zeichen-lang-ist/
     async def doSMS(self, line):
+        index = -1
         log.debug(f"SMS empfangen:{line}")
         try:
             if line.startswith('+CMT:'):  # +CMT: "+491751234567","","22/12/07,13:05:16+04"
@@ -336,7 +336,6 @@ class gsm:
                 if len(params) > 5:
                     absender = params[1]
                     smsTime = params[5]
-                    index = -1
                     nachricht = ''
                     await asyncio.sleep_ms(200)
                     while self.sim.uart.any() > 0:
@@ -434,6 +433,10 @@ class gsm:
                 else:
                     log.info("SMS ist zu alt --> nicht zulässig")
                     self.set_status('error', f"SMS zu alt: {absender} um:{smsTime} msg:{nachricht}")
+            elif absender.find("+65647*" >= 0):  # Tarifinfo-SMS
+                log.debug("Tarifinfo SMS")
+                if index != -1:
+                    await self.sim.deleteSms(index)
             else:
                 log.warning(f"Absender {absender} nicht erlaubt")
                 self.set_status('error', f"Absender nicht erlaubt: {absender} um:{smsTime} msg:{nachricht}")
@@ -478,17 +481,17 @@ class gsm:
         try:
             log.debug("Status als SMS senden")  # self.app.status['target_temp_room'][0]
             msg = 'ttr:' + self.inetApp.get_status('target_temp_room') + \
-                '; ctr:' + self.inetApp.get_status('current_temp_room') + \
-                '\nttw:' + self.inetApp.get_status('target_temp_water') + \
-                '; ctw:' + self.inetApp.get_status('current_temp_water') + \
-                '\nhm:' + self.inetApp.get_status('heating_mode') + \
-                '; os:' + self.inetApp.get_status('operating_status') + \
-                '\nU:' + str(self.inetApp.get_status('spannung')) + \
-                '; err:' + self.inetApp.get_status('error_code') + \
-                '\nrW:' + str(self.inetApp.get_status('rssi')) + \
-                '; rG:' + str(self.get_status('rssi')) + \
-                '\nlin:' + self.inetApp.get_status('alive') + \
-                '; mqtt:' + ("ON" if get_led("MQTT") == 1 else "OFF")
+                ';ctr:' + self.inetApp.get_status('current_temp_room') + \
+                ';\nttw:' + self.inetApp.get_status('target_temp_water') + \
+                ';ctw:' + self.inetApp.get_status('current_temp_water') + \
+                ';\nhm:' + self.inetApp.get_status('heating_mode') + \
+                ';os:' + self.inetApp.get_status('operating_status') + \
+                ';\nU:' + str(self.inetApp.get_status('spannung')) + \
+                ';err:' + self.inetApp.get_status('error_code') + \
+                ';\nrW:' + str(self.inetApp.get_status('rssi')) + \
+                ';rG:' + str(self.get_status('rssi')) + \
+                ';\nlin:' + self.inetApp.get_status('alive') + \
+                ';mqtt:' + ("ON" if get_led("MQTT") == 1 else "OFF")
             log.debug(msg)
             if not await self.sim.sendSms(absender,  msg):
                 log.error("Fehler beim senden Status-SMS")

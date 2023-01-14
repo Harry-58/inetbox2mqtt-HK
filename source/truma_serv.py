@@ -38,7 +38,7 @@ import time
 from machine import UART, Pin, I2C
 import logging
 
-checkMem = False  # HK: zur Überwachung der Speichernutzung
+checkMem = True  # HK: zur Überwachung der Speichernutzung
 if checkMem:
     import micropython
     import gc  # https://forum.micropython.org/viewtopic.php?t=1747  https://docs.micropython.org/en/latest/develop/memorymgt.html
@@ -68,6 +68,8 @@ config.password = c.get_decrypt_key("credentials.dat", "UPW")
 MainTopic = c.get_decrypt_key("credentials.dat", "MAINTOPIC")
 TelNr = c.get_decrypt_key("credentials.dat", "TELNR")
 Pin = c.get_decrypt_key("credentials.dat", "PIN")
+
+c = None  # crypt wird nicht mehr benötigt
 
 # Change the following configs to suit your environment
 S_TOPIC_1 = MainTopic + '/set/'
@@ -278,11 +280,11 @@ async def main(client):
     while True:
         await asyncio.sleep(10)  # Update every 10sec
         if checkMem:   # Speicher überwachen   https://docs.micropython.org/en/latest/reference/constrained.html#the-heap
-            micropython.mem_info()
+            #micropython.mem_info()
             mem = gc.mem_free()
             if mem < 20000:
                 gc.collect()  # Speicher aufräumen
-                print(f"mem_free:{mem} --> {gc.mem_free()}")
+                #print(f"mem_free:{mem} --> {gc.mem_free()}")
 
         s = lin.app.get_all(True)
         for key in s.keys():
