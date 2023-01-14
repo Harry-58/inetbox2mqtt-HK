@@ -10,6 +10,8 @@ from machine import UART
 from machine import Pin
 import logging
 
+import gc
+
 logLevel = logging.INFO
 
 log = logging.getLogger(__name__)
@@ -33,40 +35,70 @@ class sim800l:
             tt = buf.decode("utf-8").strip()
             return tt
         except UnicodeError:
-            buf = bytearray(buf)
-            tmp = ""
-            for i in range(len(buf)):
-                if buf[i] > 127:
-                    if buf[i] == 228:
-                        tmp += "ä"
-                    elif buf[i] == 246:
-                        tmp += "ö"
-                    elif buf[i] == 252:
-                        tmp += "ü"
-                    elif buf[i] == 196:
-                        tmp += "Ä"
-                    elif buf[i] == 214:
-                        tmp += "Ö"
-                    elif buf[i] == 220:
-                        tmp += "Ü"
-                    elif buf[i] == 223:
-                        tmp += "ß"
-                    else:
-                        tmp += "#"
-                else:
-                    tmp += chr(buf[i])
-            return tmp.strip()
-
-    def Xconvert_to_string(self, buf):
-        try:
-            tt = buf.decode("utf-8").strip()
-            return tt
-        except UnicodeError:
             tmp = bytearray(buf)
-            for i in range(len(tmp)):
-                if tmp[i] > 127:
-                    tmp[i] = ord("#")
+            gc.collect() # Speicher aufräumen
+            for i in range(len(buf)):
+
+                if buf[i] > 127:
+                    if tmp[i] == 228:  # ä
+                        tmp[i] = ord("a")
+                    elif tmp[i] == 246:  # ö
+                        tmp[i] = ord("o")
+                    elif tmp[i] == 252:  # ü
+                        tmp[i] = ord("u")
+                    elif tmp[i] == 196:
+                        tmp[i] = ord("A")
+                    elif tmp[i] == 214:
+                        tmp[i] = ord("O")
+                    elif tmp[i] == 220:
+                        tmp[i] = ord("U")
+                    elif tmp[i] == 223:
+                        tmp[i] = ord("s")
+                    else:
+                        tmp[i] = ord("#")
             return bytes(tmp).decode("utf-8").strip()
+
+    # def convert_to_string(self, buf):  # info: mit der originalen Funktion werden alle Umlaute durch # ersetzt
+    #     try:                           # durch die dynamische Stringerweiterung gibt es Speicherplatzprobleme
+    #         #print (f"c2s>{buf}")      #  deshalb obige Funktion ohne Umlaute
+    #         tt = buf.decode("utf-8").strip()
+    #         return tt
+    #     except UnicodeError:
+    #         buf = bytearray(buf)
+    #         tmp = ""
+    #         for i in range(len(buf)):
+    #             gc.collect()
+    #             if buf[i] > 127:
+    #                 if buf[i] == 228:
+    #                     tmp += "ä"
+    #                 elif buf[i] == 246:
+    #                     tmp += "ö"
+    #                 elif buf[i] == 252:
+    #                     tmp += "ü"
+    #                 elif buf[i] == 196:
+    #                     tmp += "Ä"
+    #                 elif buf[i] == 214:
+    #                     tmp += "Ö"
+    #                 elif buf[i] == 220:
+    #                     tmp += "Ü"
+    #                 elif buf[i] == 223:
+    #                     tmp += "ß"
+    #                 else:
+    #                     tmp += "#"
+    #             else:
+    #                 tmp += chr(buf[i])
+    #         return tmp.strip()
+
+    # def Xconvert_to_string(self, buf):
+    #     try:
+    #         tt = buf.decode("utf-8").strip()
+    #         return tt
+    #     except UnicodeError:
+    #         tmp = bytearray(buf)
+    #         for i in range(len(tmp)):
+    #             if tmp[i] > 127:
+    #                 tmp[i] = ord("#")
+    #         return bytes(tmp).decode("utf-8").strip()
 
     async def writeline(self, command):
         self.uart.write("{}\r\n".format(command))
