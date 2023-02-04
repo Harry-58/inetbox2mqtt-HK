@@ -88,6 +88,7 @@ log = logging.getLogger(__name__)
 
 class gsm:
     erlaubteAbsender = ["+49 172 xxxxxxxx", "+49yyyyyyyyyy"]  # hier Telefonnummern eintragen von denen SMSen angenommen werden (beliebig viele)
+    sofortLoeschen = ["erreich", "Italien" ,"Inklusiveinheiten", "Mehrwertdienste","Datenroaming"]
     # mit Landesvorwahl
     # wenn in __init__  Telefonnummern übergeben werden, wird die Liste überschrieben
 
@@ -295,6 +296,13 @@ class gsm:
                 self.loop_cnt = 0
                 erg = await self.sim.getSmsSpeicher()            # SMS Speicherbelegung senden
                 self.set_status('speicher', erg)
+                params = erg.split(",")  # "ME",1,50,"ME",1,50,"ME",1,50
+                if len(params) > 2:
+                    if params[1] > (params[2]-20):  # wenn weniger als 20 Speicheplätze frei
+                        log.debug("SMS speicher läuft voll --> alle löschen")
+                        erg = await self.sim.listSms(0)  # alle auflisten
+                        self.set_status('nachricht', json.dumps(erg))  # ohne json werden Umlaute in hex konvertiert
+                        await self.sim.deleteSms("ALL")  # dann löschen
 
             if (self.sim.uart.any()):
                 line = self.sim.uart.readline()
@@ -433,10 +441,11 @@ class gsm:
                 else:
                     log.info("SMS ist zu alt --> nicht zulässig")
                     self.set_status('error', f"SMS zu alt: {absender} um:{smsTime} msg:{nachricht}")
-            elif absender.find("+65647*" >= 0):  # Tarifinfo-SMS
-                log.debug("Tarifinfo SMS")
+            elif absender.find("+65647*" >= 0):  # Netzclub Info  +65647*736p65726
                 if index != -1:
-                    await self.sim.deleteSms(index)
+                    if absender in self.sofortLoeschen:
+                        log.debug("SMS sofort löschen")
+                        await self.sim.deleteSms(index)
             else:
                 log.warning(f"Absender {absender} nicht erlaubt")
                 self.set_status('error', f"Absender nicht erlaubt: {absender} um:{smsTime} msg:{nachricht}")
