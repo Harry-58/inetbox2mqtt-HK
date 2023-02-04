@@ -36,12 +36,6 @@ def operating_status_to_string(operating_status):
         return "WARNING"
     elif operating_status == 4:
         return "start/cool down"
-    elif operating_status == 5:
-        return "On(5)"
-    elif operating_status == 6:
-        return "On(6)"
-    elif operating_status == 7:
-        return "On(7)"
     else:
         return f"On({operating_status})"
 
@@ -92,7 +86,7 @@ def heating_mode_to_string(heating_mode):
         return "high"
     else:
         return f"UNKNOWN ({heating_mode})"
-    
+
 # inverse of the above
 def string_to_heating_mode(string):
     if string == "off":
@@ -108,4 +102,3 @@ def clock_to_string(clock):
     m = int(clock / 256)
     h = int(clock - (m * 256))
     return f"{h:02}:{m:02}"
-            
