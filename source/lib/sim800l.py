@@ -28,35 +28,136 @@ class sim800l:
         self.debug = _debug
         log.setLevel(logLevel)
 
-# https://de.wikipedia.org/wiki/GSM_03.38
     def convert_to_string(self, buf):  # info: mit der originalen Funktion werden alle Umlaute durch # ersetzt
         try:
             #print (f"c2s>{buf}")
             tt = buf.decode("utf-8").strip()
+            gc.collect()  # Speicher aufräumen
+            return tt
+        except UnicodeError:
+            anzUml = 0
+            for i in range(len(buf)):   # Anzahl Umlaute ermitteln
+                if buf[i] > 127:
+                    anzUml += 1
+            tmp = bytearray(len(buf)+anzUml)  # Speicher reservieren
+
+            #print(f"tmp1:{tmp}")
+            j = 0
+            gc.collect()  # Speicher aufräumen
+            for i in range(len(buf)):
+                if buf[i] > 127:
+                    gc.collect()  # Speicher aufräumen
+                    if buf[i] == 228:    # ä
+                        tmp[i+j] = ord("a")
+                        j += 1
+                        tmp[i+j] = ord("e")
+                    elif buf[i] == 246:  # ö
+                        tmp[i+j] = ord("o")
+                        j += 1
+                        tmp[i+j] = ord("e")
+                    elif buf[i] == 252:  # ü
+                        tmp[i+j] = ord("u")
+                        j += 1
+                        tmp[i+j] = ord("e")
+                    elif buf[i] == 196:  # Ä
+                        tmp[i+j] = ord("A")
+                        j += 1
+                        tmp[i+j] = ord("E")
+                    elif buf[i] == 214:  # Ö
+                        tmp[i+j] = ord("O")
+                        j += 1
+                        tmp[i+j] = ord("E")
+                    elif buf[i] == 220:  # Ü
+                        tmp[i+j] = ord("U")
+                        j += 1
+                        tmp[i+j] = ord("E")
+                    elif buf[i] == 223:  # ß
+                        tmp[i+j] = ord("s")
+                        j += 1
+                        tmp[i+j] = ord("s")
+                    else:                # unbekannt
+                        tmp[i+j] = ord("#")
+                else:
+                    tmp[i+j] = buf[i]    # unverändert übernehmen
+            return bytes(tmp).decode("utf-8").strip()
+
+    def convert_to_string2(self, buf):
+        umLaute = {228: b'ae', 246: b'oe', 252: b'ue', 196: b'AE', 214: b'OE', 220: b'UE', 223: b'ss'}
+        try:
+            #print (f"c2s>{buf}")
+            tt = buf.decode("utf-8").strip()
+            gc.collect()  # Speicher aufräumen
+            return tt
+        except UnicodeError:
+            tmp = bytearray(0)
+            gc.collect()  # Speicher aufräumen
+            for i in range(len(buf)):
+                gc.collect()  # Speicher aufräumen
+                if buf[i] > 127:
+                    gc.collect()  # Speicher aufräumen
+                    #print( umLaute[buf[i]][0] , umLaute[buf[i]][1])
+                    try:
+                        tmp.append(umLaute[buf[i]][0])
+                        tmp.append(umLaute[buf[i]][1])
+                    except KeyError:  # wenn Key nicht in umLaute
+                        tmp.append(ord("#"))
+                else:
+                    tmp.append(buf[i])
+
+            #print (f"tmp4:{tmp}")
+            gc.collect()  # Speicher aufräumen
+            return bytes(tmp).decode("utf-8").strip()
+
+
+# https://de.wikipedia.org/wiki/GSM_03.38
+
+    def convert_to_string3(self, buf):  # info: mit der originalen Funktion werden alle Umlaute durch # ersetzt
+        try:
+            #print (f"c2s>{buf}")
+            tt = buf.decode("utf-8").strip()
+            gc.collect()  # Speicher aufräumen
             return tt
         except UnicodeError:
             tmp = bytearray(buf)
-            gc.collect() # Speicher aufräumen
+            gc.collect()  # Speicher aufräumen
             for i in range(len(buf)):
-
                 if buf[i] > 127:
-                    if tmp[i] == 228:  # ä
+                    gc.collect()  # Speicher aufräumen
+                    if buf[i] == 228:  # ä
                         tmp[i] = ord("a")
-                    elif tmp[i] == 246:  # ö
+                    elif buf[i] == 246:  # ö
                         tmp[i] = ord("o")
-                    elif tmp[i] == 252:  # ü
+                    elif buf[i] == 252:  # ü
                         tmp[i] = ord("u")
-                    elif tmp[i] == 196:
+                    elif buf[i] == 196:
                         tmp[i] = ord("A")
-                    elif tmp[i] == 214:
+                    elif buf[i] == 214:
                         tmp[i] = ord("O")
-                    elif tmp[i] == 220:
+                    elif buf[i] == 220:
                         tmp[i] = ord("U")
-                    elif tmp[i] == 223:
+                    elif buf[i] == 223:
                         tmp[i] = ord("s")
                     else:
                         tmp[i] = ord("#")
+                    gc.collect()  # Speicher aufräumen
             return bytes(tmp).decode("utf-8").strip()
+
+        # https://www.python-forum.de/viewtopic.php?t=12280
+        # for old, new in ('[(', '])', '\'"'):
+        #      data = data.replace(old, new)
+        #
+        # https://www.w3schools.com/python/ref_string_translate.asp
+        # txt = "äöüÄÖÜß"
+        # mydict = {228: "ae", 246: "oe", 252: "ue", 196: "AE", 214: "OE", 220: "UE", 223: "ss"}
+        # tmp=txt.translate(mydict)
+        # https://www.w3schools.com/python/ref_string_encode.asp
+        # bytes(tmp).decode("utf-8",errors="replace").strip()
+
+    # https://www.dotnetperls.com/bytes-python
+    # Insert at index 1 the value 3.
+    # values.insert(1, 3)
+    # Element ersetzen
+    # values[0] = 5
 
     # def convert_to_string(self, buf):  # info: mit der originalen Funktion werden alle Umlaute durch # ersetzt
     #     try:                           # durch die dynamische Stringerweiterung gibt es Speicherplatzprobleme
