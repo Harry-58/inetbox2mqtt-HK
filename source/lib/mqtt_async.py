@@ -528,6 +528,9 @@ class MQTTClient():
         rssi = s.status("rssi")
         return rssi
 
+    def isMqttConnected(self):
+        return (self._state == 1)
+
     async def connect(self):
         if self._state > 1:
             raise ValueError("cannot reuse")
