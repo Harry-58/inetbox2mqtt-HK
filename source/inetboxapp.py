@@ -131,29 +131,29 @@ class InetboxApp:
             # mapping-table: key, subject, byte-len, storage
             1: ["dummy", 1, False],
             2: ["checksum", 1, False],
-            3: ["timer_target_temp_room", 2, True],
-            4: ["timer_unknown2", 1, False],
-            5: ["timer_unknown3", 1, False],
-            6: ["timer_unknown4", 1, False],
-            7: ["timer_unknown5", 1, False],
-            8: ["timer_target_temp_water", 2, True],
-            9: ["timer_unknown6", 1, False],
-            10: ["timer_unknown7", 1, False],
-            11: ["timer_unknown8", 1, False],
-            12: ["timer_unknown9", 1, False],
-            13: ["timer_unknown10", 2, False],
-            14: ["timer_unknown11", 2, False],
-            15: ["timer_unknown12", 1, False],
-            16: ["timer_unknown13", 1, False],
-            17: ["timer_unknown14", 1, False],
-            18: ["timer_unknown15", 1, False],
-            19: ["timer_unknown16", 1, False],
-            20: ["timer_unknown17", 1, False],
-            21: ["timer_active", 1, True],
-            22: ["timer_start_minutes", 1, True],
-            23: ["timer_start_hours", 1, True],
-            24: ["timer_stop_minutes", 1, True],
-            25: ["timer_stop_hours", 1, True]
+            3: ["timer/target_temp_room", 2, True],
+            4: ["timer/unknown2", 1, True],
+            5: ["timer/unknown3", 1, True],
+            6: ["timer/unknown4", 1, True],
+            7: ["timer/unknown5", 1, True],
+            8: ["timer/target_temp_water", 2, True],
+            9: ["timer/unknown6", 1, True],
+            10: ["timer/unknown7", 1, True],
+            11: ["timer/unknown8", 1, True],
+            12: ["timer/unknown9", 1, True],
+            13: ["timer/unknown10", 2, True],
+            14: ["timer/unknown11", 2, True],
+            15: ["timer/unknown12", 1, True],
+            16: ["timer/unknown13", 1, True],
+            17: ["timer/unknown14", 1,True],
+            18: ["timer/unknown15", 1, True],
+            19: ["timer/unknown16", 1, True],
+            20: ["timer/unknown17", 1, True],
+            21: ["timer", 1, True],           # timer_active
+            22: ["timer/start_minutes", 1, True],
+            23: ["timer/start_hours", 1, True],
+            24: ["timer/stop_minutes", 1, True],
+            25: ["timer/stop_hours", 1, True]
         },
         STATUS_BUFFER_HEADER_02: {
             # mapping-table: key, subject, byte-len, storage
@@ -198,22 +198,23 @@ class InetboxApp:
         "current_temp_water": (cnv.temp_code_to_string, None),
         "operating_status": (cnv.operating_status_to_string, None),
         "error_code": (cnv.error_code_to_string, None),
-        "timer_target_temp_room": (
+        "timer/target_temp_room": (
             cnv.temp_code_to_string,
             cnv.string_to_temp_code,
         ),
-        "timer_target_temp_water": (
+        "timer/target_temp_water": (
             cnv.temp_code_to_string,
             cnv.string_to_temp_code,
         ),
-        "timer_active": (
+        "timer": (                    # timer_active
             cnv.bool_to_int,
             cnv.int_to_bool,
         ),
-        "timer_start_minutes": (int, int,),
-        "timer_start_hours": (int, int,),
-        "timer_stop_minutes": (int, int,),
-        "timer_stop_hours": (int, int,),
+        "timer/start_minutes": (int, int,),
+        "timer/start_hours": (int, int,),
+        "timer/stop_minutes": (int, int,),
+        "timer/stop_hours": (int, int,),
+        "timer/unknown2": (int, int,),
         "clock": (cnv.clock_to_string, None,),
         "display": (str, None)
     }
@@ -266,9 +267,9 @@ class InetboxApp:
         data = {
             "target_temp_room": cnv.temp_code_to_decimal(databytes[0] | (databytes[1] & 0x0F) << 8),
             "target_temp_water":  cnv.temp_code_to_decimal(databytes[2] << 4 | (databytes[1] & 0xF0) >> 4),
-            "energy_mix":  self.map_or_debug(self.ENERGY_MIX_MAPPING, databytes[3]),
-            "energy_mode": self.map_or_debug(self.ENERGY_MODE_MAPPING, databytes[4]),
-            "energy_mode_2": self.map_or_debug(self.ENERGY_MODE_2_MAPPING, databytes[5] & 0x0F,),
+            #"energy_mix":  self.map_or_debug(self.ENERGY_MIX_MAPPING, databytes[3]),
+            #"energy_mode": self.map_or_debug(self.ENERGY_MODE_MAPPING, databytes[4]),
+            #"energy_mode_2": self.map_or_debug(self.ENERGY_MODE_2_MAPPING, databytes[5] & 0x0F,),
             "vent_mode":  self.map_or_debug(self.VENT_MODE_MAPPING, databytes[5] >> 4),
             # "pid_20_unknown_byte_6": hex(databytes[6]),
             # "pid_20_unknown_byte_7": hex(databytes[7]),
@@ -365,8 +366,8 @@ class InetboxApp:
         status_buffer_map = self.STATUS_BUFFER_TYPES[self.STATUS_BUFFER_HEADER_WRITE_STATUS]
 
         # increase output message counter
-        self.status["command_counter"] = [(self.status["command_counter"][0] + 1) % 0xFF, True]
-        self.status["checksum"] = [0, True]
+        self.status["command_counter"] = [(self.status["command_counter"][0] + 1) % 0xFF, False] #INFO: war True  soll aber nicht übertragen werden
+        self.status["checksum"] = [0, False] #INFO: war True  soll aber nicht übertragen werden
 
         keys = list(status_buffer_map.keys())
         keys.sort()
@@ -396,7 +397,7 @@ class InetboxApp:
                 + self.STATUS_BUFFER_HEADER_WRITE_STATUS
                 + binary_buffer_contents
             )[self.STATUS_HEADER_CHECKSUM_START:]
-        ), True]
+        ), False] #INFO: war True  soll aber nicht übertragen werden
 
 #        try:
         binary_buffer_contents = bytearray(0)
@@ -443,7 +444,10 @@ class InetboxApp:
         #             return f"unknown - {self.status[key]} = {hex(self.status[key])}"
         if key not in self.STATUS_CONVERSION_FUNCTIONS:
             #            self.log.warning(f"Conversion function not defined - this key {key} isn't defined?")
+            if key.startswith("timer/unknown"):
+                return(int(self.status[key][0]))
             raise Exception(f"Conversion function not defined - this key {key} isn't defined?")
+
         if self.STATUS_CONVERSION_FUNCTIONS[key] is None:
             #            self.log.warning(f"Conversion function not defined - this key {key} isn't readable")
             raise Exception(f"Conversion function not defined - this key {key} isn't readable")
@@ -470,7 +474,6 @@ class InetboxApp:
 
 # Status-Dump - with False, it sends all status-values
 # with True it sends only a list of changed values - but reset the chance-flag
-
 
     def get_all(self, only_updates):
         #        print("Status:", self.status)
