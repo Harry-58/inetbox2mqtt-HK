@@ -145,7 +145,7 @@ class InetboxApp:
             14: ["timer/unknown11", 2, True],
             15: ["timer/unknown12", 1, True],
             16: ["timer/unknown13", 1, True],
-            17: ["timer/unknown14", 1,True],
+            17: ["timer/unknown14", 1, True],
             18: ["timer/unknown15", 1, True],
             19: ["timer/unknown16", 1, True],
             20: ["timer/unknown17", 1, True],
@@ -214,7 +214,6 @@ class InetboxApp:
         "timer/start_hours": (int, int,),
         "timer/stop_minutes": (int, int,),
         "timer/stop_hours": (int, int,),
-        "timer/unknown2": (int, int,),
         "clock": (cnv.clock_to_string, None,),
         "display": (str, None)
     }
@@ -267,9 +266,9 @@ class InetboxApp:
         data = {
             "target_temp_room": cnv.temp_code_to_decimal(databytes[0] | (databytes[1] & 0x0F) << 8),
             "target_temp_water":  cnv.temp_code_to_decimal(databytes[2] << 4 | (databytes[1] & 0xF0) >> 4),
-            #"energy_mix":  self.map_or_debug(self.ENERGY_MIX_MAPPING, databytes[3]),
-            #"energy_mode": self.map_or_debug(self.ENERGY_MODE_MAPPING, databytes[4]),
-            #"energy_mode_2": self.map_or_debug(self.ENERGY_MODE_2_MAPPING, databytes[5] & 0x0F,),
+            # "energy_mix":  self.map_or_debug(self.ENERGY_MIX_MAPPING, databytes[3]),
+            # "energy_mode": self.map_or_debug(self.ENERGY_MODE_MAPPING, databytes[4]),
+            # "energy_mode_2": self.map_or_debug(self.ENERGY_MODE_2_MAPPING, databytes[5] & 0x0F,),
             "vent_mode":  self.map_or_debug(self.VENT_MODE_MAPPING, databytes[5] >> 4),
             # "pid_20_unknown_byte_6": hex(databytes[6]),
             # "pid_20_unknown_byte_7": hex(databytes[7]),
@@ -330,7 +329,7 @@ class InetboxApp:
 
     def process_status_buffer_update(self, buf_id, status_buffer):
         if self.debug:
-            print(f"Status ID[{buf_id}] data: {status_buffer}")
+            print(f"Status ID[{format_bytes(buf_id)}] data: {format_bytes(status_buffer)}")
 
         if not (buf_id in self.STATUS_BUFFER_TYPES.keys()):
             if self.debug:
@@ -366,8 +365,8 @@ class InetboxApp:
         status_buffer_map = self.STATUS_BUFFER_TYPES[self.STATUS_BUFFER_HEADER_WRITE_STATUS]
 
         # increase output message counter
-        self.status["command_counter"] = [(self.status["command_counter"][0] + 1) % 0xFF, False] #INFO: war True  soll aber nicht übertragen werden
-        self.status["checksum"] = [0, False] #INFO: war True  soll aber nicht übertragen werden
+        self.status["command_counter"] = [(self.status["command_counter"][0] + 1) % 0xFF, False]  # INFO: war True  soll aber nicht übertragen werden
+        self.status["checksum"] = [0, False]  # INFO: war True  soll aber nicht übertragen werden
 
         keys = list(status_buffer_map.keys())
         keys.sort()
@@ -397,7 +396,7 @@ class InetboxApp:
                 + self.STATUS_BUFFER_HEADER_WRITE_STATUS
                 + binary_buffer_contents
             )[self.STATUS_HEADER_CHECKSUM_START:]
-        ), False] #INFO: war True  soll aber nicht übertragen werden
+        ), False]  # INFO: war True  soll aber nicht übertragen werden
 
 #        try:
         binary_buffer_contents = bytearray(0)
@@ -444,8 +443,8 @@ class InetboxApp:
         #             return f"unknown - {self.status[key]} = {hex(self.status[key])}"
         if key not in self.STATUS_CONVERSION_FUNCTIONS:
             #            self.log.warning(f"Conversion function not defined - this key {key} isn't defined?")
-            if key.startswith("timer/unknown"):
-                return(int(self.status[key][0]))
+            if ("unknown" in key) or ("recv_" in key):
+                return (hex(self.status[key][0]))
             raise Exception(f"Conversion function not defined - this key {key} isn't defined?")
 
         if self.STATUS_CONVERSION_FUNCTIONS[key] is None:

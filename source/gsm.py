@@ -88,7 +88,7 @@ log = logging.getLogger(__name__)
 
 class gsm:
     erlaubteAbsender = ["+49 172 xxxxxxxx", "+49yyyyyyyyyy"]  # hier Telefonnummern eintragen von denen SMSen angenommen werden (beliebig viele)
-    sofortLoeschen = ["erreich", "Italien" ,"Inklusiveinheiten", "Mehrwertdienste","Datenroaming"]
+    sofortLoeschen = ["erreich", "Italien", "Inklusiveinheiten", "Mehrwertdienste", "Datenroaming"]
     # mit Landesvorwahl
     # wenn in __init__  Telefonnummern übergeben werden, wird die Liste überschrieben
 
@@ -316,7 +316,7 @@ class gsm:
                         set_led("GSM", True)
                         if not line.startswith('OK'):
                             log.debug(f"sim: {line}")
-                        if line.find('NOT READY') >= 0 or line.find('ERROR') >= 0 or line.find('VOLTAGE') >= 0:
+                        if ('NOT READY' in line) or ('ERROR' in line) or ('VOLTAGE' in line):
                             self.set_status('error', line)
                             set_led("GSM", False)
                             # E:\PlatformIO\Test\GSM_SIM800\SIM800 Series_AT Command Manual_V1.10.pdf  ab Seite 342
@@ -409,9 +409,9 @@ class gsm:
                         Anzahl_Read = 0
                         Anzahl_UnRead = 0
                         for i in range(len(erg)):
-                            if erg[i].find("UNREAD") >= 0:
+                            if ("UNREAD" in erg[i]):
                                 Anzahl_UnRead = +1
-                            elif erg[i].find("READ") >= 0:
+                            elif ("READ" in erg[i]):
                                 Anzahl_Read = +1
                             log.debug(f"sms[{i}]={erg[i]}")
                         self.set_status('nachricht', json.dumps(erg))  # ohne json werden Umlaute in hex konvertiert
@@ -441,7 +441,7 @@ class gsm:
                 else:
                     log.info("SMS ist zu alt --> nicht zulässig")
                     self.set_status('error', f"SMS zu alt: {absender} um:{smsTime} msg:{nachricht}")
-            elif absender.find("+65647*" >= 0):  # Netzclub Info  +65647*736p65726
+            elif ("+65647*" in absender):  # Netzclub Info  +65647*736p65726
                 if index != -1:
                     if absender in self.sofortLoeschen:
                         log.debug("SMS sofort löschen")
@@ -469,11 +469,14 @@ class gsm:
                 await self.setHeat(temp, mode)
             elif nachricht.startswith("b."):  # b.40  (0,40,60,200)
                 boil = nachricht[2:].replace('?', '').strip()
+                log.debug(f"boil <{boil}>")
                 if not boil.isdigit():
+                    log.warning(f"boil <{boil}> keine Zahl")
                     boil = 0
-                if not boil in [0, 40, 60, 200]:
+                if not int(boil) in [0, 40, 60, 200]:
+                    log.warning(f"boil <{boil}> nicht in Werten")
                     boil = 40    # bei falschen Werten auf 40=eco setzen
-                log.info(f"boil:{boil}")
+                log.info(f"boil:>{boil}<")
                 await self.setWater(boil)
             else:
                 log.warning(f"truma_unbekannt: {nachricht}")
