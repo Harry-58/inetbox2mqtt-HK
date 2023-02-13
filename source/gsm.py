@@ -87,12 +87,12 @@ log = logging.getLogger(__name__)
 
 
 class gsm:
-    erlaubteAbsender = ["+49 172 xxxxxxxx", "+49yyyyyyyyyy"]  # hier Telefonnummern eintragen von denen SMSen angenommen werden (beliebig viele)
+    erlaubteAbsender = ["+49 172 xxxxxxxx", "+49 x"]  # hier Telefonnummern eintragen von denen SMSen angenommen werden (beliebig viele)
     # mit Landesvorwahl
     # wenn in __init__  Telefonnummern übergeben werden, wird die Liste überschrieben
 
-    tarifInfo = ["netzclub", "+65647*736p65726"]  # Netzclub Info
-    sofortLoeschen = ["erreich", "Italien", "Inklusiveinheiten", "Mehrwertdienste", "Datenroaming"]
+    infoSMS = ["netzclub", "+65647*736p65726"]  # Provider Info SMS
+    sofortLoeschen = ["erreich", "Italien", "Inklusive", "Mehrwert", "roaming"] # wenn infoSMS eines dieser Worte enthält, wird die SMS sofort gelöscht
 
     inetApp = None
     debug = False
@@ -158,8 +158,7 @@ class gsm:
                     s.update({key: self.get_status(key)})
             return s
 
-    def XXXtimeDiff(self, tAct, tSms):  # speicherplatzprobleme
-        pass
+    # def XXXtimeDiff(self, tAct, tSms):  # speicherplatzprobleme
         # SMS-Time 22-11-15,09:10:50
         # 01234567890123456789
         # ACT-Time 22/11/13,17:54:30+04
@@ -328,8 +327,9 @@ class gsm:
                             #self.set_status('netname', erg)
                             # rssi = await self.sim.getRSSI()
                             #self.set_status('rssi', rssi)
-                        elif line.startswith('+CMTI:') or line.startswith('+CMT:'):  # SMS empfangen indirekt, SMS steht im Speicher  +CMGR: "REC UNREAD","+4917512345678","","22/12/07,12:32:01+04"\rTest1
-                            await self.doSMS(line)                                   # SMS empfangen direkt                           +CMT: "+4917512345678","","22/12/07,12:29:50+04"
+                        elif line.startswith('+CMT'):  # SMS empfangen indirekt(+CMTI:), SMS steht im Speicher  +CMGR: "REC UNREAD","+4917512345678","","22/12/07,12:32:01+04"\rTest1
+                                                       # SMS empfangen direkt  (+CMT:)   "+4917512345678","","22/12/07,12:29:50+04"
+                            await self.doSMS(line)
                         elif line.startswith('+CIEV:'):  # +CIEV: 10,"26203","netzclub+","netzclub+", 0, 0
                             pass
         except Exception as e:
@@ -443,9 +443,9 @@ class gsm:
                 else:
                     log.info("SMS ist zu alt --> nicht zulässig")
                     self.set_status('error', f"SMS zu alt: {absender} um:{smsTime} msg:{nachricht}")
-            elif (absender in self.tarifInfo): # Tarifinfo SMS
+            elif (absender in self.infoSMS):  # Info SMS vom Provider
                 if index != -1:
-                    if absender in self.sofortLoeschen:
+                    if absender in self.sofortLoeschen:  # Tarifinfo Roaming sofort löschen
                         log.debug("SMS sofort löschen")
                         await self.sim.deleteSms(index)
             else:
