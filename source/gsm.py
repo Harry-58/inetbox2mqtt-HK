@@ -91,7 +91,7 @@ class gsm:
     # mit Landesvorwahl
     # wenn in __init__  Telefonnummern übergeben werden, wird die Liste überschrieben
 
-    tarifInfo = ["netzclub", "+65647*"]  # Netzclub Info  +65647*736p65726
+    tarifInfo = ["netzclub", "+65647*736p65726"]  # Netzclub Info
     sofortLoeschen = ["erreich", "Italien", "Inklusiveinheiten", "Mehrwertdienste", "Datenroaming"]
 
     inetApp = None
