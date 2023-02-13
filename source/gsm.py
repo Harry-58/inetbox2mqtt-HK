@@ -88,9 +88,11 @@ log = logging.getLogger(__name__)
 
 class gsm:
     erlaubteAbsender = ["+49 172 xxxxxxxx", "+49yyyyyyyyyy"]  # hier Telefonnummern eintragen von denen SMSen angenommen werden (beliebig viele)
-    sofortLoeschen = ["erreich", "Italien", "Inklusiveinheiten", "Mehrwertdienste", "Datenroaming"]
     # mit Landesvorwahl
     # wenn in __init__  Telefonnummern übergeben werden, wird die Liste überschrieben
+
+    tarifInfo = ["netzclub", "+65647*"]  # Netzclub Info  +65647*736p65726
+    sofortLoeschen = ["erreich", "Italien", "Inklusiveinheiten", "Mehrwertdienste", "Datenroaming"]
 
     inetApp = None
     debug = False
@@ -374,7 +376,7 @@ class gsm:
                 #print (f"actTime:{actTime}")
                 delta = self.timeDiff(actTime, smsTime)
                 #print (f"delta:{delta}")
-                if delta < 3600:  # nur verarbeiten wenn nicht älter als 1 Stunde
+                if delta < 1800:  # nur verarbeiten wenn nicht älter als 30min
                     log.debug("SMS zulässig")
                     nachricht = nachricht.strip().lower()
                     if nachricht.startswith("t.") or nachricht.startswith("b."):  # Raum- und Wassertemperatur setzen
@@ -441,7 +443,7 @@ class gsm:
                 else:
                     log.info("SMS ist zu alt --> nicht zulässig")
                     self.set_status('error', f"SMS zu alt: {absender} um:{smsTime} msg:{nachricht}")
-            elif ("+65647*" in absender):  # Netzclub Info  +65647*736p65726
+            elif (absender in self.tarifInfo): # Tarifinfo SMS
                 if index != -1:
                     if absender in self.sofortLoeschen:
                         log.debug("SMS sofort löschen")
