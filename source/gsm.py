@@ -444,10 +444,12 @@ class gsm:
                     log.info("SMS ist zu alt --> nicht zulässig")
                     self.set_status('error', f"SMS zu alt: {absender} um:{smsTime} msg:{nachricht}")
             elif (absender in self.infoSMS):  # Info SMS vom Provider
-                if index != -1:
-                    if absender in self.sofortLoeschen:  # Tarifinfo Roaming sofort löschen
+                if absender in self.sofortLoeschen:  # Tarifinfo Roaming sofort löschen
+                    if index != -1:
                         log.debug("SMS sofort löschen")
                         await self.sim.deleteSms(index)
+                else:
+                    self.set_status('nachricht', f"von:{absender} um:{smsTime} msg:{nachricht}")
             else:
                 log.warning(f"Absender {absender} nicht erlaubt")
                 self.set_status('error', f"Absender nicht erlaubt: {absender} um:{smsTime} msg:{nachricht}")
